@@ -1,13 +1,6 @@
 #!/bin/sh
 url="https://raw.githubusercontent.com/Smeueg/Dotfiles/master/.config/scripts/migrate/smeueger"
-if [ "$(command -v wget)" ]; then
-	sh <<EOF
-$(wget -O- "${url}")
-EOF
-elif [ "$(command -v curl)" ]; then
-	sh <<EOF
-$(curl -L "${url}")
-EOF
-else
-	printf '\033[1m\033[31m[ERROR]\033[0m `wget` and `curl` is not installed. One of them must be installed to use this script\n'
+if [ "$(command -v wget)" ]; then eval "$(wget -O- "${url}")"
+elif [ "$(command -v curl)" ]; then eval "$(curl -L "${url}")"
+else printf '\033[1m\033[31m[ERROR]\033[0m `wget` and `curl` is not installed. One of them must be installed to use this script\n'
 fi
