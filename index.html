@@ -4,73 +4,40 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
 	<title>Smeueg</title>
-	<style>
-		* {
-				font-family: "JetBrains Mono", monospace;
-				color: #E7DEC7;
-				background-color: #322638;
-		}
-
-		code {
-				background-color: #2D2233;
-				border: 2px solid #503C58;
-				display: block;
-				margin: auto;
-				padding: 10px;
-				max-width: 461px;
-				word-break: break-word;
-				white-space: pre-wrap;
-		}
-
-		b {
-				background-color: #2D2233;
-				padding: 4px;
-				font-weight: normal;
-		}
-
-		a {
-				color: #FEA34B;
-				font-weight: bolder;
-				text-decoration: none;
-		}
-
-
-		.center { text-align: center; }
-		h1, h2 { color: #FEA34B; }
-		img { height: auto; }
-		p { white-space: pre-line; }
-
-		.div-center {
-			display: grid;
-			justify-content: center;
-		}
-
-	</style>
 	</head>
 	<body>
-		<div class="div-center"><h1>My Very Smeueg Dotfiles</h1></div>
-		<div class="div-center"><p style="text-align:center"><img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Smeueg.png" style="width:20%"></p></div>
-		<p class="center"><img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Screenshot.png" style="width:50%"></p>
-		<div class="div-center">
-			<p>These dotfiles consists of configuration files for: <a href="https://awesomewm.org/">AwesomeWM</a>, <a href="https://www.gnu.org/software/emacs/">Emacs</a>, <a href="https://github.com/davatorium/rofi">rofi</a> (optional, AwesomeWM also has it's own way to start programs ), and any posix shells</p>
-			<p>To Bootstrap my dotfiles, if you're using something like <b>bash</b> or <b>zsh</b> run:</p>
-		</div>
-		<p><code>sh &lt(curl -L https://smeueg.github.io/smeueger)</code></p>
-		<div class="div-center">or</div>
-		<p><code>sh &lt(wget -O- https://smeueg.github.io/smeueger)</code></p>
+		<h1>My Very Smeueg™ Dotfiles</h1>
 		<br>
-		<div class="div-center">else, run:</div>
-		<p><code>sh &lt&ltEOF&#10$(curl -L https://smeueg.github.io/smeueger)&#10EOF</code></p>
-		<div class="div-center">or</div>
-		<p><code>sh &lt&ltEOF&#10$(wget -O- https://smeueg.github.io/smeueger)&#10EOF</code></p>
-		<br>
-		<br>
-		<br>
-		<br>
-		<div class="div-center"><p>I also have a youtube playlist downloader which downloads every song in a playlist to the <a href="https://en.wikipedia.org/wiki/MP3">mp3</a> format:</p></div>
-		<p><code>curl -Ls https://smeueg.github.io/smeuesic -o /tmp/smeuesic; sh /tmp/smeuesic</code></p>
-		<div class="div-center">or</div>
-		<p><code>wget https://smeueg.github.io/smeuesic -qO /tmp/smeuesic; sh /tmp/smeuesic</code></p>
+		<p>This site will probably only be as an overview of my dotfiles and such, so I hope you enjoy your stay</p>
+		<h2>Dotfiles</h2>
+		<img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Smeueg.png" id="profile">
+		<img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Screenshot.png" id="screenshot">
+		<p>
+		These dotfiles mainly consists of configuration files for:
+			<ul>
+				<li><a href="https://awesomewm.org/">AwesomeWM</a></li>
+				<li><a href="https://www.gnu.org/software/emacs/">Emacs</a></li>
+				<li><a href="https://github.com/davatorium/rofi">Rofi</a> (Optional, AwesomeWM also has it's own "menu")</li>
+				<li>And any POSIX shell. (Screw you <a href="https://fishshell.com">Fish</a>)</li>
+			</ul>
+			To bootstrap my dotfiles, if you're using something like <b>bash</b> or <b>zsh</b> you can run:
+			else, run:
+			<p><code>sh &lt(curl -L https://smeueg.github.io/smeueger)</code></p>
+			<p class="center">or</p>
+			<p><code>sh &lt(wget -O- https://smeueg.github.io/smeueger)</code></p>
+			<p class="center">else, run:</p>
+			<p><code>sh &lt&ltEOF&#10$(curl -L https://smeueg.github.io/smeueger)&#10EOF</code></p>
+			<p class="center">or</p>
+			<p><code>sh &lt&ltEOF&#10$(wget -O- https://smeueg.github.io/smeueger)&#10EOF</code></p>
+		</p>
+		<h2>Miscellaneous</h2>
+		<p>
+				I also have a youtube playlist downloader which downloads every song in a playlist to the <a href="https://en.wikipedia.org/wiki/MP3">mp3</a> format:
+				<p><code>curl -Ls https://smeueg.github.io/smeuesic -o /tmp/smeuesic; sh /tmp/smeuesic</code></p>
+				<p class="center">or</p>
+				<p><code>wget https://smeueg.github.io/smeuesic -qO /tmp/smeuesic; sh /tmp/smeuesic</code></p>
+		</p>
 </body>
 </html>
