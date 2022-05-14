@@ -36,7 +36,10 @@ h2 {
 
 /* Images */
 #profile { width: 40%; }
-#github { width: 5%; }
+#github {
+	min-width: 60px;
+	width: 10%;
+}
 
 img {
 	display: block;
