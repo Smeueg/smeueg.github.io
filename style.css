@@ -10,7 +10,7 @@
 body {
 	background: var(--bg);
 	color: var(--fg);
-	font-size: 1.75vh;
+	font-size: 20px;
 	-ms-overflow-style: none;  /* IE and Edge */
 	scrollbar-width: none;
 	width: 80%;
@@ -60,9 +60,10 @@ a:hover { text-decoration-color: inherit; }
 
 code {
 	background: #00000030;
-	padding: 0.5rem;
+	padding: 0.25rem;
 	border: 0.35rem solid var(--bg3);
 	border-radius: 0.5rem;
+	margin: 1rem;
 }
 
 
