@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="style.css">
+	<link rel="icon" href="./icon.png" type="image/x-icon">
+	<title>Smeueg</title>
+	</head>
+	<body>
+		<h1>My Very Smeueg™ Dotfiles</h1>
+		<a href="https://github.com/Smeueg"><img src="https://www.shareicon.net/data/2016/06/20/606964_github_4096x4096.png" id="github"></a>
+		<p>This site will probably only be as an overview of my dotfiles and such, so I hope you enjoy your stay.</p>
+		<h2>Dotfiles</h2>
+		<img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Smeueg.png" id="profile">
+		<img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Screenshot.png" id="screenshot">
+		<p>
+		These dotfiles mainly consists of configuration files for:
+			<ul>
+				<li><a href="https://awesomewm.org/">AwesomeWM</a></li>
+				<li><a href="https://www.gnu.org/software/emacs/">Emacs</a></li>
+				<li><a href="https://github.com/davatorium/rofi">Rofi</a> (Optional, AwesomeWM also has it's own "menu")</li>
+				<li>And any POSIX shell. (Screw you <a href="https://fishshell.com">Fish</a>)</li>
+			</ul>
+			To bootstrap my dotfiles, if you're using something like <b>bash</b> or <b>zsh</b> you can run:
+			else, run:
+			<p><code>sh &lt(curl -L https://smeueg.github.io/smeueger)</code></p>
+			<p class="center">or</p>
+			<p><code>sh &lt(wget -O- https://smeueg.github.io/smeueger)</code></p>
+			<p class="center">else, run:</p>
+			<p><code>sh &lt&ltEOF&#10$(curl -L https://smeueg.github.io/smeueger)&#10EOF</code></p>
+			<p class="center">or</p>
+			<p><code>sh &lt&ltEOF&#10$(wget -O- https://smeueg.github.io/smeueger)&#10EOF</code></p>
+		</p>
+		<h2>Miscellaneous</h2>
+		<p>
+				I also have a youtube playlist downloader which downloads every song in a playlist to the <a href="https://en.wikipedia.org/wiki/MP3">mp3</a> format:
+				<p><code>curl -Ls https://smeueg.github.io/smeuesic -o /tmp/smeuesic; sh /tmp/smeuesic</code></p>
+				<p class="center">or</p>
+				<p><code>wget https://smeueg.github.io/smeuesic -qO /tmp/smeuesic; sh /tmp/smeuesic</code></p>
+		</p>
+</body>
+</html>

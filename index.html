@@ -1,44 +1,60 @@
 <!DOCTYPE html>
 <html>
 	<head>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="style.css">
-	<link rel="icon" href="./icon.png" type="image/x-icon">
-	<title>Smeueg</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="./style.css">
+		<link rel="icon" href="./pfp.png" type="image/x-icon">
+		<title>Smeueg</title>
 	</head>
-	<body>
-		<h1>My Very Smeueg™ Dotfiles</h1>
-		<a href="https://github.com/Smeueg"><img src="https://www.shareicon.net/data/2016/06/20/606964_github_4096x4096.png" id="github"></a>
-		<p>This site will probably only be as an overview of my dotfiles and such, so I hope you enjoy your stay.</p>
-		<h2>Dotfiles</h2>
-		<img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Smeueg.png" id="profile">
-		<img src="https://github.com/Smeueg/Dotfiles/raw/master/.config/rice/Screenshot.png" id="screenshot">
+
+  <body>
+		<h1>Smeueg</h1>
+		<img id="profile" src="./pfp.png" alt="Profile Picture">
+
 		<p>
-		These dotfiles mainly consists of configuration files for:
-			<ul>
-				<li><a href="https://awesomewm.org/">AwesomeWM</a></li>
-				<li><a href="https://www.gnu.org/software/emacs/">Emacs</a></li>
-				<li><a href="https://github.com/davatorium/rofi">Rofi</a> (Optional, AwesomeWM also has it's own "menu")</li>
-				<li>And any POSIX shell. (Screw you <a href="https://fishshell.com">Fish</a>)</li>
-			</ul>
-			To bootstrap my dotfiles, if you're using something like <b>bash</b> or <b>zsh</b> you can run:
-			else, run:
-			<p><code>sh &lt(curl -L https://smeueg.github.io/smeueger)</code></p>
-			<p class="center">or</p>
-			<p><code>sh &lt(wget -O- https://smeueg.github.io/smeueger)</code></p>
-			<p class="center">else, run:</p>
-			<p><code>sh &lt&ltEOF&#10$(curl -L https://smeueg.github.io/smeueger)&#10EOF</code></p>
-			<p class="center">or</p>
-			<p><code>sh &lt&ltEOF&#10$(wget -O- https://smeueg.github.io/smeueger)&#10EOF</code></p>
+			Welcome fleshlings! You'll find things like my dotfiles and some of my
+			scripts or programs that I'd like to showcase. I hope you enjoy your stay!
 		</p>
-		<h2>Miscellaneous</h2>
-		<p>
-				I also have a youtube playlist downloader which downloads every song in a playlist to the <a href="https://en.wikipedia.org/wiki/MP3">mp3</a> format:
-				<p><code>curl -Ls https://smeueg.github.io/smeuesic -o /tmp/smeuesic; sh /tmp/smeuesic</code></p>
-				<p class="center">or</p>
-				<p><code>wget https://smeueg.github.io/smeuesic -qO /tmp/smeuesic; sh /tmp/smeuesic</code></p>
-		</p>
-</body>
+
+		<div class="curtain">
+			<input type="checkbox" id="curtain-1">
+			<label for="curtain-1">Dotfiles</label>
+			<div>
+				<img src="./Rice.png" alt="Dotfiles Screenshot">
+				<p>
+					These dotfiles has configuration files for:
+					<ul>
+						<li><a href="https://awesomewm.org/">AwesomeWM</a></li>
+						<li><a href="https://www.gnu.org/software/emacs/">Emacs</a></li>
+						<li><a href="https://github.com/davatorium/rofi">Rofi</a> (Optional, as AwesomeWM also has it's own "menu")</li>
+						<li>Any POSIX shell like <a href="https://www.gnu.org/software/bash/">bash</a></li>
+					</ul>
+					<br>
+					<br>
+					I made a script to easily bootstrap my dotfiles. You should be able to
+					set it up with this one liner using the terminal/TTY:
+				</p>
+				<code>curl -L https://smeueg.github.io/smeueger -o /tmp/smeueger && sh /tmp/smeueger</code>
+				<p>Or if don't have <a href="https://curl.se/">curl</a> installed but instead have <a href="https://www.gnu.org/software/wget/">wget</a>:</p>
+				<code>wget https://smeueg.github.io/smeueger -O /tmp/smeueger && sh /tmp/smeueger</code>
+			</div>
+		</div>
+
+		<div class="curtain">
+			<input type="checkbox" id="curtain-2">
+			<label for="curtain-2">Scripts</label>
+			<div>
+				<code>curl -L https://smeueg.github.io/smeuesic -o /tmp/smeuesic && sh /tmp/smeuesic</code>
+				<p>Or if don't have <a href="https://curl.se/">curl</a> installed but instead have <a href="https://www.gnu.org/software/wget/">wget</a>:</p>
+				<code>wget https://smeueg.github.io/smeuesic -O /tmp/smeuesic && sh /tmp/smeuesic</code>
+
+				<h3>Others:</h3>
+				<ul>
+					<li><a href="https://github.com/smeueg/boxer">Boxer</a></li>
+				</ul>
+			</div>
+		</div>
+	</body>
 </html>
