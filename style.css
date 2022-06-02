@@ -11,6 +11,10 @@ body {
 	font-size: 1.75vh;
 	-ms-overflow-style: none;  /* IE and Edge */
 	scrollbar-width: none;
+	width: 80%;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 body::-webkit-scrollbar { display: none; }
@@ -24,13 +28,6 @@ body::-webkit-scrollbar { display: none; }
 h1 {
 	color: var(--fg2);
 	text-align: center;
-}
-
-body {
-	width: 80%;
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
 }
 
 #profile {
@@ -62,6 +59,7 @@ code {
 	background: #00000030;
 	padding: 0.5rem;
 	border: 2px solid #ffffff15;
+	border-radius: 0.5rem;
 }
 
 
@@ -70,7 +68,7 @@ code {
 .curtain {
 	background: #ffffff08;
 	padding: 20px;
-	border-radius: 10px;
+	border-radius: 0.5rem;
 	margin-top: 5rem;
 	overflow: hidden;
 }
