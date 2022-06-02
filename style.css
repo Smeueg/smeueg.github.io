@@ -10,7 +10,7 @@
 body {
 	background: var(--bg);
 	color: var(--fg);
-	font-size: 20px;
+	font-size: 1.5vh;
 	-ms-overflow-style: none;  /* IE and Edge */
 	scrollbar-width: none;
 	width: 80%;
@@ -30,10 +30,16 @@ body::-webkit-scrollbar { display: none; }
 h1 {
 	color: var(--fg2);
 	text-align: center;
+	font-size: 1.75em;
+}
+
+h2 {
+	margin-top: 4em;
+	font-size: 1.1em;
 }
 
 #profile {
-	width: 9rem;
+	width: 6em;
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
@@ -42,17 +48,17 @@ h1 {
 
 img {
 	width: 50%;
-	width: 50rem;
+	width: 50em;
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
-	border: 0.35rem solid var(--bg3);
+	border: 0.2em solid var(--bg3);
 }
 
 a {
 	color: var(--fg2);
 	font-weight: bold;
-	text-decoration: underline 0.25rem #00000000;
+	text-decoration: underline 0.25em #00000000;
 	transition: text-decoration-color 500ms;
 }
 
@@ -60,20 +66,18 @@ a:hover { text-decoration-color: inherit; }
 
 code {
 	background: #00000030;
-	padding: 0.25rem;
-	border: 0.35rem solid var(--bg3);
-	border-radius: 0.5rem;
-	margin: 1rem;
+	padding: 0.25em;
+	border: 0.2em solid var(--bg3);
+	border-radius: 0.5em;
 }
-
 
 
 /* Curtain Animations and Styling */
 .curtain {
 	background: var(--bg2);
-	padding: 2rem;
-	border-radius: 0.5rem;
-	margin-top: 5rem;
+	padding: 2em;
+	border-radius: 0.5em;
+	margin-top: 5em;
 	overflow: hidden;
 }
 
@@ -100,7 +104,7 @@ code {
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
-	font-size: 1.75rem;
+	font-size: 1.5em;
 }
 
 .curtain > input[type="checkbox"]:checked ~ label,
