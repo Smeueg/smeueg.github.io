@@ -33,7 +33,7 @@ h1 {
 }
 
 #profile {
-	width: 10%;
+	width: 9rem;
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
@@ -42,6 +42,7 @@ h1 {
 
 img {
 	width: 50%;
+	width: 50rem;
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
