@@ -47,8 +47,8 @@ h2 {
 }
 
 img {
-	width: 50%;
 	width: 50em;
+	max-width: 90%;
 	display: block;
 	margin-left: auto;
 	margin-right: auto;
@@ -64,7 +64,7 @@ a {
 
 a:hover { text-decoration-color: inherit; }
 
-code {
+.code {
 	background: #00000030;
 	padding: 0.25em;
 	border: 0.2em solid var(--bg3);
