@@ -111,20 +111,19 @@ a:hover { text-decoration-color: inherit; }
 .curtain > label:hover { text-decoration-color: inherit; }
 
 .curtain > input[type="checkbox"] ~ div {
-	height: 0px;
 	font-size: 0px;
 	margin: 0px;
 	padding: 0px;
 	opacity: 0;
 	transition:
 		opacity 250ms,
+		width 500ms, 250ms,
 		font-size 500ms 250ms,
 		margin 500ms 250ms,
 		padding 500ms 250ms;
 }
 
 .curtain > input[type="checkbox"]:checked ~ div {
-	height: auto;
 	opacity: 1;
 	color: inherit;
 	font-size: inherit;
@@ -134,5 +133,6 @@ a:hover { text-decoration-color: inherit; }
 		font-size 500ms,
 		margin 500ms,
 		padding 500ms,
+		width 500ms,
 		opacity 250ms 500ms;
 }
