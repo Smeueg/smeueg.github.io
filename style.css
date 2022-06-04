@@ -1,4 +1,6 @@
-/* "Main" styles */
+/* --------------- */
+/* General Styling */
+/* --------------- */
 :root {
 	--fg: #ebdbb2;
 	--fg2: #fe8019;
@@ -7,24 +9,34 @@
 	--bg3: #504945;
 }
 
+
+
+html { scroll-behavior: smooth; }
+html, body {
+	min-height: 100vh;
+	margin-top: 1em;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+body::-webkit-scrollbar { display: none; } /* Hide Scrollbar */
 body {
 	background: var(--bg);
 	color: var(--fg);
-	font-size: 1.5vh;
+	font-family: "JetBrains Mono", monospace;
+	/* font-size: 1.5vh; */
+	width: 80%;
+	margin: 0px auto;
+	/* Hide Scrollbar */
 	-ms-overflow-style: none;  /* IE and Edge */
 	scrollbar-width: none;
-	width: 80%;
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
 }
 
-body::-webkit-scrollbar { display: none; }
-
-* {
-	background: inherit;
-	color: inherit;
-	font-family: "JetBrains Mono", monospace;
+body > * {
+	flex-shrink: 0;
+	margin: 0;
+	padding: 0;
 }
 
 h1 {
@@ -38,12 +50,12 @@ h2 {
 	font-size: 1.1em;
 }
 
-#profile {
-	width: 6em;
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-	border: none;
+a:hover { text-decoration-color: inherit; }
+a {
+	color: var(--fg2);
+	font-weight: bold;
+	text-decoration: underline 0.25em #00000000;
+	transition: text-decoration-color 500ms;
 }
 
 img {
@@ -55,20 +67,105 @@ img {
 	border: 0.2em solid var(--bg3);
 }
 
-a {
-	color: var(--fg2);
-	font-weight: bold;
-	text-decoration: underline 0.25em #00000000;
-	transition: text-decoration-color 500ms;
+#profile > img { border: none; }
+#profile {
+	width: 6em;
+	max-width: 100%;
+	align-self: center;
+	padding: 3em 0;
+	cursor: default;
 }
 
-a:hover { text-decoration-color: inherit; }
-
+.code::-webkit-scrollbar { display: none; }
 .code {
 	background: #00000030;
 	padding: 0.25em;
 	border: 0.2em solid var(--bg3);
 	border-radius: 0.5em;
+	overflow: scroll;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+	width: max-content;
+	max-width: 100%;
+
+}
+
+
+
+
+/* Links (Github, Gitlab, and Youtube) */
+#contact-info {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+#contact-info::before {
+	content: "";
+	height: 100%;
+}
+
+#contact-info > * {
+	display: flex;
+	justify-content: center;
+	flex-wrap: wrap;
+	padding: 2em 0;
+}
+
+#contact-info > * > * {
+	width:  2em;
+	height: 2em;
+	margin: 0 1em;
+}
+#github { color: #ffffff; fill: currentColor;}
+#gitlab .tanuki { color: #dc3545; }
+#gitlab .cheeks { color: #fd7e14; }
+#gitlab .chin   { color: #ffc107; }
+
+
+
+/*----------------------*/
+/*Animations/Transitions*/
+/*----------------------*/
+
+/* Fade in when the page loads */
+body {
+	opacity: 0;
+	animation: load 2000ms 500ms forwards;
+}
+
+@keyframes load {
+	to { opacity: 1; }
+}
+
+
+/* Focus Highlighting (When Tab is pressed) */
+:focus-visible {
+	position: relative;
+	outline: none;
+}
+
+:focus-visible::after {
+	content: "";
+	width: 100%;
+	height: 100%;
+	padding: 0.125em;
+
+	position: absolute;
+	left: 0;
+	transform: translateX(-0.25em) translateY(-0.25em);
+
+	border: 0.1em solid #00000000;
+	border-radius: 0.5em;
+	animation: outline 2000ms infinite;
+}
+
+@keyframes outline {
+	0%   { border-color: #00000000; }
+	25%  { border-color: var(--fg2); }
+	75%  { border-color: var(--fg2); }
+	100% { border-color: #00000000; }
 }
 
 
@@ -76,7 +173,7 @@ a:hover { text-decoration-color: inherit; }
 .curtain {
 	background: var(--bg2);
 	padding: 2em;
-	border-radius: 0.5em;
+	border-radius: 1em;
 	margin-top: 5em;
 	overflow: hidden;
 }
@@ -86,53 +183,74 @@ a:hover { text-decoration-color: inherit; }
 	margin-top: none;
 }
 
-.curtain > input[type="checkbox"] { display: none; }
+.curtain > input[type="checkbox"] {
+	position: absolute;
+	opacity: 0;
+}
+
 .curtain > label {
+	font-size: 1.5em;
+	color: var(--fg2);
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	cursor: pointer;
+	/* Transition */
 	text-decoration: overline 0.15em #00000000;
 	transition: text-decoration-color 500ms;
 	/* Disable text selection/highlighting */
 	-webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-	color: var(--fg2);
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 	font-weight: bold;
 	text-align: center;
-	cursor: pointer;
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-	font-size: 1.5em;
 }
 
-.curtain > input[type="checkbox"]:checked ~ label,
-.curtain > label:hover { text-decoration-color: inherit; }
+input:focus-visible + label,
+.curtain > label:hover { animation: top-border 2000ms infinite; }
+@keyframes top-border {
+	0%   { text-decoration-color: #00000000; }
+	25%  { text-decoration-color: inherit; }
+	75%  { text-decoration-color: inherit; }
+	100% { text-decoration-color: #00000000; }
+}
+
+.curtain > input[type="checkbox"]:checked ~ label {
+	text-decoration-color: inherit;
+}
 
 .curtain > input[type="checkbox"] ~ div {
-	font-size: 0px;
-	margin: 0px;
-	padding: 0px;
 	opacity: 0;
+	font-size: 0;
+	margin: 0;
+	padding: 0;
+	visibility: hidden;
 	transition:
 		opacity 250ms,
-		width 500ms, 250ms,
 		font-size 500ms 250ms,
 		margin 500ms 250ms,
-		padding 500ms 250ms;
+		padding 500ms 250ms,
+		visibility 0s 750ms;
 }
 
 .curtain > input[type="checkbox"]:checked ~ div {
-	opacity: 1;
-	color: inherit;
 	font-size: inherit;
 	margin: inherit;
 	padding: inherit;
+	opacity: 1;
+	visibility: visible;
 	transition:
 		font-size 500ms,
 		margin 500ms,
 		padding 500ms,
 		width 500ms,
 		opacity 250ms 500ms;
+}
+
+
+@keyframes hide {
+	to { visibility: hidden; }
 }

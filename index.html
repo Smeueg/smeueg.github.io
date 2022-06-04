@@ -10,8 +10,8 @@
 	</head>
 
   <body>
-		<h1>A Very Smeueg™ Webpage</h1>
-		<img id="profile" src="./pfp.png" alt="Profile Picture">
+		<h1>Smeueg</h1>
+		<a tabindex="-1" id="profile" href="./Recipes.html"><img src="./pfp.png" alt="Profile Picture"></a>
 
 		<p>
 			Welcome fleshlings! You'll find things like my dotfiles and some of my
@@ -36,9 +36,18 @@
 					I made a script to easily bootstrap my dotfiles. You should be able to
 					set it up with this one liner using the terminal/TTY:
 				</p>
-				<p class="code">curl -L https://smeueg.github.io/smeueger -o /tmp/smeueger && sh /tmp/smeueger</p>
-				<p>Or if don't have <a href="https://curl.se/">curl</a> installed but instead have <a href="https://www.gnu.org/software/wget/">wget</a>:</p>
-				<p class="code">wget https://smeueg.github.io/smeueger -O /tmp/smeueger && sh /tmp/smeueger</p>
+				<p class="code">
+					curl -L https://smeueg.github.io/smeueger -o /tmp/smeueger &&
+					sh /tmp/smeueger
+				</p>
+				<p>
+					Or if don't have <a href="https://curl.se/">curl</a> installed but
+					instead have <a href="https://www.gnu.org/software/wget/">wget</a>:
+				</p>
+				<p class="code">
+					wget https://smeueg.github.io/smeueger -O /tmp/smeueger &&
+					sh /tmp/smeueger
+				</p>
 			</div>
 		</div>
 
@@ -46,6 +55,13 @@
 			<input type="checkbox" id="curtain-2">
 			<label for="curtain-2">Scripts</label>
 			<div>
+				<h2>Smeusic</h2>
+				<p>
+					It's a script to sync a youtube playlist locally. It downloads the
+					videos in the <a href="https://de.wikipedia.org/wiki/MP3">MP3</a>
+					format with an option to remove audio files that isn't in the youtube
+					playlist.
+				</p>
 				<p class="code">curl -L https://smeueg.github.io/smeuesic -o /tmp/smeuesic && sh /tmp/smeuesic</p>
 				<p>Or if don't have <a href="https://curl.se/">curl</a> installed but instead have <a href="https://www.gnu.org/software/wget/">wget</a>:</p>
 				<p class="code">wget https://smeueg.github.io/smeuesic -O /tmp/smeuesic && sh /tmp/smeuesic</p>
@@ -54,6 +70,32 @@
 				<ul>
 					<li><a href="https://github.com/smeueg/boxer">Boxer</a></li>
 				</ul>
+			</div>
+		</div>
+
+		<div id="contact-info">
+			<div>
+				<a href="https://github.com/Smeueg">
+					<svg id="github" aria-hidden="true" viewBox="0 0 16 16" version="1.1" data-view-component="true">
+						<path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+					</svg>
+				</a>
+
+				<a href="https://gitlab.com/Smeueg">
+					<svg id="gitlab" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path class="tanuki" d="m24.507 9.5-.034-.09L21.082.562a.896.896 0 0 0-1.694.091l-2.29 7.01H7.825L5.535.653a.898.898 0 0 0-1.694-.09L.451 9.411.416 9.5a6.297 6.297 0 0 0 2.09 7.278l.012.01.03.022 5.16 3.867 2.56 1.935 1.554 1.176a1.051 1.051 0 0 0 1.268 0l1.555-1.176 2.56-1.935 5.197-3.89.014-.01A6.297 6.297 0 0 0 24.507 9.5Z" fill="#E24329"></path>
+						<path class="cheeks" d="m24.507 9.5-.034-.09a11.44 11.44 0 0 0-4.56 2.051l-7.447 5.632 4.742 3.584 5.197-3.89.014-.01A6.297 6.297 0 0 0 24.507 9.5Z" fill="#FC6D26"></path>
+						<path class="chin" d="m7.707 20.677 2.56 1.935 1.555 1.176a1.051 1.051 0 0 0 1.268 0l1.555-1.176 2.56-1.935-4.743-3.584-4.755 3.584Z" fill="#FCA326"></path>
+						<path class="cheeks" d="M5.01 11.461a11.43 11.43 0 0 0-4.56-2.05L.416 9.5a6.297 6.297 0 0 0 2.09 7.278l.012.01.03.022 5.16 3.867 4.745-3.584-7.444-5.632Z" fill="#FC6D26"></path>
+					</svg>
+				</a>
+
+				<a href="https://www.youtube.com/channel/UC4d6djNzD-2i31YOeMHfRZA">
+					<svg id="youtube" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+						<path d="M508.64,148.79c0-45-33.1-81.2-74-81.2C379.24,65,322.74,64,265,64H247c-57.6,0-114.2,1-169.6,3.6-40.8,0-73.9,36.4-73.9,81.4C1,184.59-.06,220.19,0,255.79q-.15,53.4,3.4,106.9c0,45,33.1,81.5,73.9,81.5,58.2,2.7,117.9,3.9,178.6,3.8q91.2.3,178.6-3.8c40.9,0,74-36.5,74-81.5,2.4-35.7,3.5-71.3,3.4-107Q512.24,202.29,508.64,148.79ZM207,353.89V157.39l145,98.2Z" fill="red"></path>
+						<polygon points="200,150 350,250 200,350" style="fill:#ffffff">
+					</svg>
+				</a>
 			</div>
 		</div>
 	</body>
