@@ -10,7 +10,6 @@
 }
 
 
-
 html { scroll-behavior: smooth; }
 html, body {
 	min-height: 100vh;
@@ -131,6 +130,7 @@ img {
 
 /* Fade in when the page loads */
 body {
+	font-size: clamp(1rem, 3vw, 1.3rem);
 	opacity: 0;
 	animation: load 2000ms 500ms forwards;
 }
