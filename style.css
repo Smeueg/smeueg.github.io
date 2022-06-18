@@ -13,7 +13,7 @@
 html { scroll-behavior: smooth; }
 html, body {
 	min-height: 100vh;
-	margin-top: 1em;
+	margin: 0;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
