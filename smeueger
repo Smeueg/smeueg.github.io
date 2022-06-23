@@ -434,7 +434,7 @@ apt_enable_gh_cli() {
 
 
 apt_bootstrap_packages() {
-	packages="emacs awesome rofi sct"
+	packages="emacs awesome sct"
 
 	printf 'This will install:\n'
 	for package in ${packages}; do
@@ -447,7 +447,7 @@ apt_bootstrap_packages() {
 	fi
 
 	check_for_root
-	run_as_root "apt install emacs awesome rofi"
+	run_as_root "apt install ${packages}"
 	unset package packages
 }
 
