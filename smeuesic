@@ -10,6 +10,9 @@ cl_cyan="\033[1;36m"
 cl_reset="\033[0m"
 y_or_n="[${cl_green}y${cl_reset}/${cl_red}N${cl_reset}]"
 
+newline="
+"
+
 # Helper Functions
 if [ "${COLUMNS+x}" ]; then
 	get_cols() { COLUMNS=${COLUMNS}; }
@@ -40,12 +43,67 @@ header() {
 		str="${str}─"
 		i=$((i+1))
 	done
-	printf '${cl_red}%s${cl_reset}' "${str}"
+	printf "${cl_red}%s${cl_reset}" "${str}"
 	[ "${1}" ] &&
 		printf "\r\033[$(((COLUMNS - ${#1} - 2) / 2))C ${1} \n"
 	unset str
 }
 
+
+# Youtube-dl functions
+get_title_id() {
+	youtube-dl "${pl_url}" --flat-playlist --get-id -e |
+		{
+			while { read -r title; read id; }; do
+				title=$(IFS="/" replace "\\" "${title}")
+				title=$(replace "/" "\\" "${title}")
+				tmp="${tmp}${title}:${id}${newline}"
+			done
+			printf '%s\n\n' "${tmp}"
+		}
+}
+
+
+sync_download() {
+	# Download song's that aren't downloaded yet
+	header "Downloading Songs"
+	ran=false
+	for line in ${1}; do
+		title=${line%:*}
+		url="https://www.youtube.com/watch?v=${line##*:}"
+		if ! [ -f "${music_dir%/}/${title}.mp3" ]; then
+			ran=:
+		   	youtube-dl "${url}" \
+					   -x \
+		 			   --audio-format mp3 \
+		 			   --add-metadata --metadata-from-title "%(title)s" \
+		 			   --postprocessor-args \
+		 			   "-acodec libmp3lame" \
+		 			   -o "${music_dir}/${title}.%(ext)s"
+		fi
+	done
+	${ran} || printf 'No songs need to be downloaded\n'
+	header
+}
+
+
+sync_remove() {
+	# Remove song's that aren't in the playlist anymore
+	printf '\n\n'
+	header "Removing Songs No Longer In The Playlist"
+	ran=false
+	for file in "${music_dir%/}"/*; do
+		file=${file#${music_dir%/}/}
+
+		for line in ${1}; do
+			[ "${line%:*}.mp3" = "${file}" ] && continue 2
+		done
+		ran=:
+		rm -v "${music_dir%/}/${file}"
+	done
+	${ran} || printf 'No files to remove\n'
+	header
+}
 
 # Dependencies
 [ "$(command -v youtube-dl)" ] || error "'youtube-dl' isn't installed"
@@ -92,7 +150,8 @@ fi
 
 
 # Get playlist title
-printf "Getting playlist title, please wait..."
+printf "Getting playlist information, please wait..."
+output=$(get_title_id)
 pl_title=$(youtube-dl --playlist-end 1 -o "%(playlist)s" --get-filename "${pl_url}")
 printf "\r"
 
@@ -119,67 +178,6 @@ if ! [ -d "${music_dir}" ]; then
 	mkdir -pv "${music_dir}" || exit 1
 fi
 
-
-
-get_title_id() {
-	youtube-dl "${pl_url}" --flat-playlist --get-id -e |
-		{
-			while { read -r title; read id; }; do
-				title=$(IFS="/" replace "\\" "${title}")
-				title=$(replace "/" "\\" "${title}")
-				tmp="${tmp}${title}:${id}${newline}"
-			done
-			printf '%s\n' "${tmp}"
-		}
-}
-
-
-sync_download() {
-	# Download song's that aren't downloaded yet
-	header "Downloading Songs"
-	ran=false
-	for line in ${output}; do
-		title=${line%:*}
-		url="https://www.youtube.com/watch?v=${line##*:}"
-		if ! [ -f "${music_dir%/}/${title}.mp3" ]; then
-			ran=:
-		   	youtube-dl "${url}" \
-					   -x \
-		 			   --audio-format mp3 \
-		 			   --add-metadata --metadata-from-title "%(title)s" \
-		 			   --postprocessor-args \
-		 			   "-acodec libmp3lame" \
-		 			   -o "${music_dir}/${title}.%(ext)s"
-		fi
-	done
-	${ran} || printf 'No songs need to be downloaded\n'
-	header
-}
-
-
-sync_remove() {
-	# Remove song's that aren't in the playlist anymore
-	printf '\n\n'
-	header "Removing Songs No Longer In The Playlist"
-	ran=false
-	for file in "${music_dir%/}"/*; do
-		file=${file#${music_dir%/}/}
-
-		for line in ${output}; do
-			[ "${line%:*}.mp3" = "${file}" ] && continue 2
-		done
-		ran=:
-		rm -v "${music_dir%/}/${file}"
-	done
-	${ran} || printf 'No files to remove\n'
-	header
-}
-
-
-newline="
-"
-
-output=$(get_title_id)
-IFS=${newline} sync_download
-${remove} && IFS=${newline} sync_remove
+IFS=${newline} sync_download "${output}"
+${remove} && IFS=${newline} sync_remove "${output}"
 printf '\n'
