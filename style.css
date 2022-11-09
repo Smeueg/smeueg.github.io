@@ -1,256 +1,147 @@
-/* --------------- */
-/* General Styling */
-/* --------------- */
+/* --------- */
+/* Variables */
+/* --------- */
 :root {
 	--fg: #ebdbb2;
 	--fg2: #fe8019;
 	--bg: #282828;
 	--bg2: #3c3836;
 	--bg3: #504945;
+	--width: 80%;
 }
 
-
-html { scroll-behavior: smooth; }
-html, body {
-	min-height: 100vh;
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-}
-
-body::-webkit-scrollbar { display: none; } /* Hide Scrollbar */
+/* --------------- */
+/* General Styling */
+/* --------------- */
 body {
+	scroll-behavior: smooth;
 	background: var(--bg);
 	color: var(--fg);
+	font-size: clamp(1rem, 3vw, 1.25rem);
 	font-family: "JetBrains Mono", monospace;
-	/* font-size: 1.5vh; */
-	width: 80%;
-	margin: 0px auto;
-	/* Hide Scrollbar */
-	-ms-overflow-style: none;  /* IE and Edge */
-	scrollbar-width: none;
+	width: var(--width);
+	margin: 2em auto;
+	display: flex;
 }
 
-body > * {
-	flex-shrink: 0;
-	margin: 0;
-	padding: 0;
+@media screen and (max-width: 500px) {
+	body { font-size: 1.25rem; }
 }
 
-h1 {
-	color: var(--fg2);
-	text-align: center;
-	font-size: 1.75em;
-}
+main { display: flex; }
 
-h2 {
-	margin-top: 4em;
-	font-size: 1.1em;
+img {
+	display: block;
+	margin: auto;
 }
+img#rice {
+	width: 60%;
+	border: .5em double var(--bg3);
+	border-radius: .5em;
+}
+img#pfp { width: 10em; }
 
-a:hover { text-decoration-color: inherit; }
 a {
 	color: var(--fg2);
 	font-weight: bold;
-	text-decoration: underline 0.25em #00000000;
+	text-decoration: underline .1em #00000000;
+	transition: text-decoration 500ms;
+}
+a:hover { text-decoration: underline .1em var(--fg2); }
+
+.fa::before {
+	font-size: 1.5em;
+	margin-right: .5em;
+}
+
+.table {
+	display: grid;
+	grid-template-columns: repeat(2, auto);
+	grid-gap: .5em;
+}
+
+h2 { text-align: center; }
+
+i { text-align: right; }
+
+code {
+	background: var(--bg);
+	padding: .5em;
+	display: block;
+	border-radius: .5em;
+}
+
+
+/* ----------------- */
+/* Sections & Labels */
+/* ----------------- */
+section > label {
+	color: var(--fg2);
+	font-size: 1.5em;
+	font-weight: bold;
+	margin-left: 2em;
+	cursor: pointer;
+	text-decoration: underline .1em #00000000;
 	transition: text-decoration-color 500ms;
 }
-
-img {
-	width: 50em;
-	max-width: 90%;
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-	border: 0.2em solid var(--bg3);
+section > [type="radio"]:checked ~ label, section > label:hover {
+	text-decoration: underline .1em var(--fg2);
 }
 
-#profile > img { border: none; }
-#profile {
-	width: 6em;
-	max-width: 100%;
-	align-self: center;
-	padding: 3em 0;
-	cursor: default;
-}
+section:nth-of-type(1) > label { margin-left: 0px; }
+div.space { flex: auto; }
 
-.code::-webkit-scrollbar { display: none; }
-.code {
-	background: #00000030;
-	padding: 0.25em;
-	border: 0.2em solid var(--bg3);
-	border-radius: 0.5em;
-	overflow: scroll;
-	-ms-overflow-style: none;
-	scrollbar-width: none;
-	width: max-content;
-	max-width: 100%;
+section { float: left; }
 
-}
-
-
-
-
-/* Links (Github, Gitlab, and Youtube) */
-#contact-info {
-	display: flex;
-	justify-content: space-between;
-	flex-direction: column;
-	flex-grow: 1;
-}
-
-#contact-info::before {
-	content: "";
-	height: 100%;
-}
-
-#contact-info > * {
-	display: flex;
-	justify-content: center;
-	flex-wrap: wrap;
-	padding: 2em 0;
-}
-
-#contact-info > * > * {
-	width:  2em;
-	height: 2em;
-	margin: 0 1em;
-}
-#github { color: #ffffff; fill: currentColor;}
-#gitlab .tanuki { color: #dc3545; }
-#gitlab .cheeks { color: #fd7e14; }
-#gitlab .chin   { color: #ffc107; }
-
-
-
-/*----------------------*/
-/*Animations/Transitions*/
-/*----------------------*/
-
-/* Fade in when the page loads */
-body {
-	font-size: clamp(1rem, 3vw, 1.3rem);
+section > [type="radio"] { display: none; }
+[type="radio"] ~ div {
 	opacity: 0;
-	animation: load 2000ms 500ms forwards;
+	z-index: -1;
+	transition: opacity 500ms;
+}
+[type="radio"]:checked ~ div {
+	opacity: 1;
+	z-index: 0;
 }
 
-@keyframes load {
-	to { opacity: 1; }
-}
 
-
-/* Focus Highlighting (When Tab is pressed) */
-:focus-visible {
-	position: relative;
-	outline: none;
-}
-
-:focus-visible::after {
-	content: "";
-	width: 100%;
-	height: 100%;
-	padding: 0.125em;
-
+/* Section Content */
+section > div {
 	position: absolute;
 	left: 0;
-	transform: translateX(-0.25em) translateY(-0.25em);
-
-	border: 0.1em solid #00000000;
-	border-radius: 0.5em;
-	animation: outline 2000ms infinite;
+	align-items: flex-start;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+	flex-wrap: wrap;
+	width: 90%;
+	margin: 2em 5%;
 }
-
-@keyframes outline {
-	0%   { border-color: #00000000; }
-	25%  { border-color: var(--fg2); }
-	75%  { border-color: var(--fg2); }
-	100% { border-color: #00000000; }
-}
-
-
-/* Curtain Animations and Styling */
-.curtain {
+section > div > div {
+	position: relative;
 	background: var(--bg2);
+	border-radius: .5em;
 	padding: 2em;
-	border-radius: 1em;
-	margin-top: 5em;
-	overflow: hidden;
+	margin: 1em;
+	transition: transform 500ms;
+	box-shadow: 0 .5em 1em -.25em #00000030;
 }
+section > .cards > div { width: 17.5em; }
 
-.curtain > * {
-	background: none;
-	margin-top: none;
-}
+section > div > div:hover { transform: translateY(-.25em); }
 
-.curtain > input[type="checkbox"] {
+section > div  div::after {
+	content: '';
 	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
 	opacity: 0;
+	transition: opacity 500ms;
+	box-shadow: 0 1em 1em -.25em #00000030;
+	z-index: -1;
 }
-
-.curtain > label {
-	font-size: 1.5em;
-	color: var(--fg2);
-	display: block;
-	margin-left: auto;
-	margin-right: auto;
-	cursor: pointer;
-	/* Transition */
-	text-decoration: overline 0.15em #00000000;
-	transition: text-decoration-color 500ms;
-	/* Disable text selection/highlighting */
-	-webkit-touch-callout: none;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	font-weight: bold;
-	text-align: center;
-}
-
-input:focus-visible + label,
-.curtain > label:hover { animation: top-border 2000ms infinite; }
-@keyframes top-border {
-	0%   { text-decoration-color: #00000000; }
-	25%  { text-decoration-color: inherit; }
-	75%  { text-decoration-color: inherit; }
-	100% { text-decoration-color: #00000000; }
-}
-
-.curtain > input[type="checkbox"]:checked ~ label {
-	text-decoration-color: inherit;
-}
-
-.curtain > input[type="checkbox"] ~ div {
-	opacity: 0;
-	font-size: 0;
-	margin: 0;
-	padding: 0;
-	visibility: hidden;
-	transition:
-		opacity 250ms,
-		font-size 500ms 250ms,
-		margin 500ms 250ms,
-		padding 500ms 250ms,
-		visibility 0s 750ms;
-}
-
-.curtain > input[type="checkbox"]:checked ~ div {
-	font-size: inherit;
-	margin: inherit;
-	padding: inherit;
+section > div  div:hover::after {
 	opacity: 1;
-	visibility: visible;
-	transition:
-		font-size 500ms,
-		margin 500ms,
-		padding 500ms,
-		width 500ms,
-		opacity 250ms 500ms;
-}
-
-
-@keyframes hide {
-	to { visibility: hidden; }
 }
