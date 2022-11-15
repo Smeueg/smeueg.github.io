@@ -7,7 +7,6 @@
 	--bg: #282828;
 	--bg2: #3c3836;
 	--bg3: #504945;
-	--width: 80%;
 }
 
 /* --------------- */
@@ -17,16 +16,16 @@ body {
 	scroll-behavior: smooth;
 	background: var(--bg);
 	color: var(--fg);
-	font-size: clamp(1rem, 3vw, 1.25rem);
+	font-size: 125%;
 	font-family: "JetBrains Mono", monospace;
-	width: var(--width);
+	width: 80%;
 	margin: 2em auto;
 	display: flex;
 }
 
-@media screen and (max-width: 500px) {
-		body { font-size: 2rem; }
-}
+/* @media screen and (max-width: 500px) { */
+/* 	body { font-size: 2rem; } */
+/* } */
 
 main { display: flex; }
 
@@ -118,17 +117,16 @@ section > div {
 	margin: 2em 5%;
 }
 section > div > div {
-		position: relative;
-		background: var(--bg2);
-		border-radius: .5em;
-		padding: 2em;
-		margin: 1em;
-		transition: transform 500ms;
-		box-shadow: 0 .5em 1em -.25em #00000030;
+	position: relative;
+	background: var(--bg2);
+	border-radius: .5em;
+	padding: 2em;
+	margin: 1em;
+	transition: transform 500ms;
+	box-shadow: 0 .5em 1em -.25em #00000030;
 }
-section > .cards > div {
-		flex: 0 0 17.5em;
-}
+.cards > div { flex: 1 0 17.5em; }
+#social { flex: 0; }
 
 section > div > div:hover { transform: translateY(-.25em); }
 
@@ -144,6 +142,4 @@ section > div  div::after {
 	box-shadow: 0 1em 1em -.25em #00000030;
 	z-index: -1;
 }
-section > div  div:hover::after {
-	opacity: 1;
-}
+section > div  div:hover::after { opacity: 1; }
