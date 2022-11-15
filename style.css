@@ -25,7 +25,7 @@ body {
 }
 
 @media screen and (max-width: 500px) {
-	body { font-size: 1.25rem; }
+		body { font-size: 2rem; }
 }
 
 main { display: flex; }
@@ -118,15 +118,17 @@ section > div {
 	margin: 2em 5%;
 }
 section > div > div {
-	position: relative;
-	background: var(--bg2);
-	border-radius: .5em;
-	padding: 2em;
-	margin: 1em;
-	transition: transform 500ms;
-	box-shadow: 0 .5em 1em -.25em #00000030;
+		position: relative;
+		background: var(--bg2);
+		border-radius: .5em;
+		padding: 2em;
+		margin: 1em;
+		transition: transform 500ms;
+		box-shadow: 0 .5em 1em -.25em #00000030;
 }
-section > .cards > div { width: 17.5em; }
+section > .cards > div {
+		flex: 0 0 17.5em;
+}
 
 section > div > div:hover { transform: translateY(-.25em); }
 
