@@ -9,12 +9,6 @@
 	--bg3: #504945;
 }
 
-html {
-	-webkit-text-size-adjust: 100%;
-	-moz-text-size-adjust: 100%;
-	-ms-text-size-adjust: 100%;
-}
-
 /* --------------- */
 /* General Styling */
 /* --------------- */
@@ -28,10 +22,6 @@ body {
 	margin: 2em auto;
 	display: flex;
 }
-
-/* @media screen and (max-width: 500px) { */
-/* 	body { font-size: 2rem; } */
-/* } */
 
 img {
 	display: block;
@@ -99,11 +89,13 @@ section { float: left; }
 section > [type="radio"] { display: none; }
 [type="radio"] ~ div {
 	opacity: 0;
+	font-size: 0;
 	z-index: -1;
 	transition: opacity 500ms;
 }
 [type="radio"]:checked ~ div {
 	opacity: 1;
+	font-size: 1em;
 	z-index: 0;
 }
 
@@ -134,7 +126,7 @@ section > div > div {
 
 section > div > div:hover { transform: translateY(-.25em); }
 
-section > div  div::after {
+section > div div::after {
 	content: '';
 	position: absolute;
 	top: 0;
