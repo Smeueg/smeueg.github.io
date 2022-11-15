@@ -9,6 +9,12 @@
 	--bg3: #504945;
 }
 
+html {
+	-webkit-text-size-adjust: 100%;
+	-moz-text-size-adjust: 100%;
+	-ms-text-size-adjust: 100%;
+}
+
 /* --------------- */
 /* General Styling */
 /* --------------- */
@@ -26,8 +32,6 @@ body {
 /* @media screen and (max-width: 500px) { */
 /* 	body { font-size: 2rem; } */
 /* } */
-
-main { display: flex; }
 
 img {
 	display: block;
