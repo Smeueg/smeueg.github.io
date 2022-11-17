@@ -10,68 +10,128 @@
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   <body>
-		<section>
-			<input name="tab" type="radio" id="home" checked>
-			<label for="home">Home</label>
-			<div class="cards">
-				<div>
-					<h2>Profile</h2>
-					<img id="pfp" alt="" src="./pfp.png" loading="lazy"/>
-					<p>Welcome fleshlings! You'll find things like my dotfiles and some of my scripts or programs that I'd like to showcase. I hope you enjoy your stay!</p>
-				</div>
-				<div id="social">
-					<h2>Social</h2>
-					<div class="table">
-						<i class="fa fa-github"></i><a href="https://github.com/Smeueg">Github</a>
-						<i class="fa fa-gitlab"></i><a href="https://gitlab.com/Smeueg">Gitlab</a>
-						<i class="fa fa-youtube-play"></i><a href="https://www.youtube.com/channel/UC4d6djNzD-2i31YOeMHfRZA">Youtube</a>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<div class="space"></div>
-
-		<div>
-
-		<section>
-			<input name="tab" type="radio" id="dotfiles">
-			<label for="dotfiles">Dotfiles</label>
+		<nav>
+			<a href="#Home">Home</a>
 			<div>
-				<div>
-					<h2>Dotfiles</h2>
-					<img id="rice" alt="" src="./rice.png" loading="lazy"/>
-					<p>These dotfiles has configuration files for:</p>
-					<ul>
-						<li><a href="https://awesomewm.org">AwesomeWM</a></li>
-						<li><a href="https://gnu.org/software/emacs">Emacs</a></li>
-						<li>Any POSIX shell like <a href="https://gnu.org/software/bash">bash</a></li>
-					</ul>
-					<br/>
-					<p>The repository of these dotfiles can be found over on <a href="https://github.com/smeueg/Dotfiles">Github</a></p>
-					<br/>
-					<p>To easily bootstrap my dotfiles, you can use one of these one liners using the terminal/TTY:</p>
-					<code>
-						curl -s -L https://smeueg.github.io/smeueger -o /tmp/smeueger && sh /tmp/smeueger
-					</code>
-					<p>Or if you don't have <a href="https://curl.se">curl</a> installed but instead have <a href="https://gnu.org/software/wget">wget</a>:</p>
-					<code>
-						wget -q https://smeueg.github.io/smeueger -O /tmp/smeueger && sh /tmp/smeueger
-					</code>
+				<a href="#Dotfiles">Dotfiles</a>
+				<a href="#Notes">Notes</a>
+			</div>
+		</nav>
+
+		<section id="Home" class="cards" target>
+			<div>
+				<h2>Profile</h2>
+				<img id="pfp" alt="" src="./pfp.png" loading="lazy"/>
+				<p>Welcome fleshlings! You'll find things like my dotfiles and some of my scripts or programs that I'd like to showcase. I hope you enjoy your stay!</p>
+			</div>
+			<div class="small">
+				<h2>Social</h2>
+				<div class="table">
+					<i class="fa fa-github"></i><a href="https://github.com/Smeueg">Github</a>
+					<i class="fa fa-gitlab"></i><a href="https://gitlab.com/Smeueg">Gitlab</a>
+					<i class="fa fa-youtube-play"></i><a href="https://www.youtube.com/channel/UC4d6djNzD-2i31YOeMHfRZA">Youtube</a>
 				</div>
 			</div>
 		</section>
 
-		<section>
-			<input name="tab" type="radio" id="projects">
-			<label for="projects">Projects</label>
+		<section id="Dotfiles">
 			<div>
-				<div>
-					<h2><a href="https://github.com/Smeueg/ytpl-sync">ytpl-sync</a></h2>
-					<p>It's a script to sync a youtube playlist locally. It downloads the videos into a chosen format with an option to remove audio/video files that aren't in the playlist.</p>
+				<h2>Dotfiles</h2>
+				<img id="rice" alt="" src="./rice.png" loading="lazy"/>
+				<p>These dotfiles has configuration files for:</p>
+				<ul>
+					<li><a href="https://awesomewm.org">AwesomeWM</a></li>
+					<li><a href="https://gnu.org/software/emacs">Emacs</a></li>
+					<li>Any POSIX shell like <a href="https://gnu.org/software/bash">bash</a></li>
+				</ul>
+				<br/>
+				<p>The repository of these dotfiles can be found over on <a href="https://github.com/smeueg/Dotfiles">Github</a></p>
+				<br/>
+				<p>To easily bootstrap my dotfiles, you can use one of these one liners using the terminal/TTY:</p>
+				<code>
+					curl -s -L https://smeueg.github.io/smeueger -o /tmp/smeueger && sh /tmp/smeueger
+				</code>
+				<p>Or if you don't have <a href="https://curl.se">curl</a> installed but instead have <a href="https://gnu.org/software/wget">wget</a>:</p>
+				<code>
+					wget -q https://smeueg.github.io/smeueger -O /tmp/smeueger && sh /tmp/smeueger
+				</code>
+			</div>
+		</section>
+
+		<section id="Notes" class="cards">
+			<div>
+				<h4>Shell</h4>
+				<ul>
+					<li><a href="#Making-Your-Own-Prompt">Making Your Own Prompt</a></li>
+				</ul>
+				<div id="Making-Your-Own-Prompt" class="note">
+					<a href="#Notes" class="close">x</a>
+					<h3>Making Your Own Prompt</h3>
+					<p>
+						There are amazing prompts out there for your shell like <a href="https://starship.rs">Starship</a>,
+						<a href="https://spaceship-prompt.sh">Spaceship</a>, and etc...
+						But, you can also make your own prompt just the way you would like it. It's as simple as making a
+						<code>shell</code> function and setting that to the <code>PS1</code> variable. Example:
+					</p>
+						<div class="code-container">
+							<code class="language-bash"># In ~/.bashrc
+prompt() {
+	ret=${?} # Store return code
+	printf '\001\033[1;33m\002%s\n' "${PWD}" | sed "s|${HOME}|~|"
+	if [ ${ret} -eq 0 ]; then
+		printf '\001\033[1;32m\002' # If ret = 0 (success) then print green
+	else
+		printf '\001\033[1;31m\002' # Else (failed) then print red
+	fi
+	printf '> \001\033[0m\002'
+}
+export PS1="\$(prompt)"
+							</code>
+						</div>
+						<br/>
+						<div class="code-container">
+							<code>Output:
+<span class="token builtin bold">~/Projects/ytpl-sync</span>
+<span class="token char">&gt;<span></code>
+						</div>
+					<p>
+						Do keep in mind that in <code>bash</code> specifically, you need to put <code>\001</code>
+						and <code>\002</code> around every ansi-escape sequences. In <code>zsh</code> it would be
+						<code>%{</code> and <code>%}</code> instead. Of course you can also add other information
+						like time, the hostname, the current git branch (if you're in a git repo), etc. As long as
+						that information can be gotten using a simple shell script, you can display that in the
+						prompt. For example, if you want to add the current git repo:
+					</p>
+						<div class="code-container">
+							<code class="language-bash"># In ~/.bashrc
+prompt() {
+	ret=${?} # Store return code
+	printf '\001\033[1;33m\002%s' "${PWD}" | sed "s|${HOME}|~|"
+	branch=$(git branch | grep "^*" | sed "s/* \(.*\)/\1/")
+	[ "${branch}" ] && printf ' [ \001\033[1;32m\002%s\001\033[0m\002 ]\n' "${branch}"
+
+	if [ ${ret} -eq 0 ]; then
+		printf '\001\033[1;32m\002' # If ret = 0 (success) then print green
+	else
+		printf '\001\033[1;31m\002' # Else (failed) then print red
+	fi
+	printf '> \001\033[0m\002'
+}
+export PS1="\$(prompt)"
+							</code>
+						</div>
+						<br/>
+						<div class="code-container">
+							<code>Output:
+<span class="token builtin bold">~/Projects/ytpl-sync</span> [ <span class="token char">main</span> ]
+<span class="token char">&gt;<span></code>
+						</div>
 				</div>
 			</div>
 		</section>
-		</div>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
 	</body>
 </html>
