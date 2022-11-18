@@ -271,13 +271,14 @@ get_dotfiles() {
 		if ! confirmed; then
 			printf 'Will not overwrite\n'
 			return 1
-			# else
-			# 	rm -rf "${dot_dir}"
+		else
+			rm -rf "${dot_dir}"
 		fi
 	fi
 
 	# Clones and configures the repo
-	try git clone --progress --bare "${dot_url}" "${dot_dir}" || return 1
+	try git clone --progress --bare --depth 1 "${dot_url}" "${dot_dir}" ||
+		return 1
 	try git --git-dir="${dot_dir}" config status.showUntrackedFiles no ||
 		return 1
 
