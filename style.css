@@ -21,7 +21,7 @@ body {
 	font-size: 115%;
 	font-family: "JetBrains Mono", monospace;
 	width: 90%;
-	margin: 2em auto;
+	margin: 1em auto;
 	display: flex;
 	flex-wrap: wrap;
 }
@@ -78,34 +78,44 @@ code {
 }
 
 
-/* ----------------- */
-/* Sections & Labels */
-/* ----------------- */
+
+/* --- */
+/* Nav */
+/* --- */
 nav {
-	width: 100%;
-	display: flex;
-	justify-content: space-between;
+	display: grid;
 	z-index: 1;
+	grid-template-columns: repeat(3, auto);
+	grid-gap: 1em;
+	margin: auto;
+	background: var(--bg2);
+	padding: 1em;
+	border-radius: .5em;
 }
+
 nav a {
 	color: var(--fg2);
-	margin-right: 1em;
-	font-size: 1.5em;
 	font-weight: bold;
 	cursor: pointer;
-	text-decoration: underline .1em #00000000;
-	transition: text-decoration-color 500ms;
+	transition: background 500ms;
+	padding: .5em;
+	border-radius: .5em;
 }
-nav > a, nav a:last-child { margin-right: 0; }
+
+nav a:link,
+nav a:hover {
+	text-decoration: none;
+	background: #00000030;
+}
 
 
-nav a:hover { text-decoration: underline .1em var(--fg2); }
 
-div.space { flex: auto; }
-
+/* -------- */
+/* Sections */
+/* -------- */
 section {
 	position: absolute;
-	top: 2em;
+	top: 4.5em;
 	left: 0;
 	right: 0;
 	margin: auto;
