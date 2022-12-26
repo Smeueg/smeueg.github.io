@@ -371,6 +371,18 @@ while true; do
 	read_c
 	printf '\r\033[J'
 	# Controls
+
+	if [ "${char}" = "$(printf '\033')" ]; then
+		read_c
+		read_c
+		case ${char} in
+			"A") char="k" ;;
+			"B") char="j" ;;
+			"C") char="l" ;;
+			"D") char="h" ;;
+		esac
+	fi
+
 	case ${char} in
 		""|${newline})
 			if [ ${selected_opt} -gt ${counter_opt} ]; then
