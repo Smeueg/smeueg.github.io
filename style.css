@@ -151,7 +151,8 @@ section > div {
 }
 .cards > .small { flex: 0; }
 
-.note > .close {
+.close::before { content: "x"; }
+.close {
 	float: right;
 	color: var(--red);
 }
