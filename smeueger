@@ -1,13 +1,5 @@
 #!/bin/sh
 # Variables #
-opts="
-== Rice ==
-Dotfiles              [git,mv]     | get_dotfiles
-Font (JetBrainsMono)  [wget|curl]  | get_font
-== System ==
-Mount tmpfs to /tmp   [sudo|su]                         | mktmpfs
-Create Swapfile       [sudo|su,mkswap,swapon,dd,chmod]  | mkswapfile
-"
 
 newline="
 "
@@ -15,10 +7,22 @@ newline="
 selected_tab=1
 selected_opt=1
 
-str_error="[\033[1;31mERROR\033[0m]"
+# Helper Functions #
+error() { printf "\033[1;31m|\033[0m%s\n" "${@}" >&2; }
+notice() { printf "\033[1;32m|\033[0m%s\n" "${@}"; }
+
+# Asks ${1} and prompts for a Y/n answer
+ask() {
+	printf "\033[33m|\033[0m%b\033[0m" "${1}"
+	printf " [\033[1;32mY\033[0m/\033[1;31mn\033[0m] "
+	read -r line
+	case ${line} in
+		""|[Yy][Ee][Ss]|[Yy]) return 0 ;;
+		*) return 1 ;;
+	esac
+}
 
 
-# Utility Functions #
 # Splits ${1} with ${2} as its delimiter
 split() {
 	set -f
@@ -53,59 +57,16 @@ dup() {
 	printf '%s\n' "${str}"
 }
 
-# Prompts for a Y/n input
-confirmed() {
-	printf " [\033[1;32mY\033[0m/\033[1;31mn\033[0m] "
-	read line
-	case ${line} in
-		[Yy][Ee][Ss]|[Yy]) return 0 ;;
-		*) return 1 ;;
-	esac
-}
-
 # Tries to run ${@}, else prints an error message and returns
 try() {
-	if ! ${@}; then
-		printf '%b Failed to run: %s\n' "${str_error}" "${@}"
+	if ! "${@}"; then
+		error "Failed to run: ${*}"
 		return 1
 	fi
-}
-
-# Check if the user has root privilages
-check_for_root() {
-	if [ "${opts_root_cmd+x}" ] ; then
-		if [ "${opts_root_cmd}" = "none" ]; then
-			printf "${str_error} Unable to get root privilages\n"
-			return 1
-		fi
-		return 0
-	elif [ "$(command -v sudo)" ] && printf "Checking for root with 'sudo'\n" &&
-			 [ "$(sudo printf 't\n')" = "t" ]; then
-		opts_root_cmd="sudo"
-		return 0
-	elif [ "$(command -v su)" ] && printf "Checking for root with 'su'\n" &&
-			 [ "$(su -c 'printf \"t\n\"')" = "t" ]; then
-		opts_root_cmd="su"
-		return 0
-	else
-		printf "${str_error} 'sudo' and 'su' isn't installed. "
-		printf "One is required for root privilages.\n"
-		opts_root_cmd="none"
-		return 1
-	fi
-}
-
-
-# Run the command, ${1}, as root
-run_as_root() {
-	case ${opts_root_cmd} in
-		"sudo") sudo ${SHELL} -c "$@" ;;
-		"su") su -c "$@" ;;
-	esac
 }
 
 if [ "$(command -v curl)" ]; then
-	fetch() { curl -L "${1}" -o "${2}"; }
+	fetch() { curl -Ls "${1}" -o "${2}"; }
 elif [ "$(command -v wget)" ]; then
 	fetch() { wget --no-hsts "${1}" -O "${2}"; }
 fi
@@ -132,16 +93,15 @@ opts_setup() {
 			if ! [ "${dep##*|*}" ]; then
 				run=false
 				for dep_optional in $(split "${dep}" "|"); do
-					if [ "$(command -v ${dep_optional})" ]; then
+					if [ "$(command -v "${dep_optional}")" ]; then
 						run=true
 						break
 					fi
 				done
 				${run} || dep_missing="${dep_missing} ${dep}"
 			else
-				[ "$(command -v ${dep})" ] || {
+				[ "$(command -v "${dep}")" ] ||
 					dep_missing="${dep_missing} ${dep}"
-				}
 			fi
 		done
 		dep_missing=${dep_missing# }
@@ -164,7 +124,6 @@ opts_print() {
 	O_IFS=${IFS}
 	IFS=${newline}
 	str_tab=""
-	str_tab_bottom=""
 	str_choices=""
 	counter_opt=0
 	counter_tab=0
@@ -199,9 +158,6 @@ opts_print() {
 		str_choices="${str_choices}${line}${newline}"
 	done
 
-	# Prints the tab
-	str_tab=${str_tab}
-
 	str_width=$(dup "─" "${width}")
 	printf '╭┬%s\b╮\033[B\b│\033[A\n\n├┴%s\b┤\r\033[A' "${str_width}" "${str_width}"
 	printf '││%b\n\n' "${str_tab}"
@@ -213,7 +169,7 @@ opts_print() {
 		printf "%$((width + 1))s│\r│%b\n" "" "${line}"
 	done
 	printf '╰%s╯\r\033[2C %b \n' "${str_width}" "${continue}"
-	printf "\033[${counter_opt}A\033[4A"
+	printf "\033[%sA\033[4A" "${counter_opt}"
 	IFS=${O_IFS}
 }
 
@@ -266,9 +222,9 @@ get_dotfiles() {
 	dot_dir="${HOME}/.local/dots/"
 	dot_url="https://github.com/Smeueg/Dotfiles.git"
 	# Confirms to overwrite an already existing repo if it exists
+	notice "Getting Dotfiles"
 	if [ -d "${dot_dir}" ]; then
-		printf "'\033[33m%s\033[0m' already exists, overwrite?" "${dot_dir}"
-		if ! confirmed; then
+		if ! ask "'\033[35m${dot_dir}\033[0m' already exists, overwrite?"; then
 			printf 'Will not overwrite\n'
 			return 1
 		else
@@ -283,20 +239,19 @@ get_dotfiles() {
 		return 1
 
 	# Backup files that already exists
-	for file in $(git --git-dir="${dot_dir}" --work-tree="/" ls-tree \
-					  --full-tree -r --name-only HEAD); do
+	for file in $(git --git-dir="${dot_dir}" ls-tree --full-tree --name-only -r HEAD); do
 		if [ -f "${HOME}/${file}" ]; then
 			dot_backup_dir="${HOME}/DotBackups/${file%/*}"
-			mkdir -pv "${dot_backup_dir}"
-			[ -d "${dot_backup_dir}" ] && mv -v "${HOME}/${file}" "${dot_backup_dir}"
+			mkdir -pv "${dot_backup_dir}" && mv -v "${HOME}/${file}" "${dot_backup_dir}"
 		fi
 	done
-	try git --git-dir="${dot_dir}" --work-tree="${HOME}" restore "${HOME}"
+	try git --git-dir="${dot_dir}" --work-tree="${HOME}" checkout "${HOME}"
 }
 
 
 get_font() {
-	font_dir="${HOME}/.local/share/fonts"
+	# font_dir="${HOME}/.local/share/fonts"
+	font_dir="/tmp/.local/share/fonts"
 	font_dir="${font_dir%/}/JetBrainsMono Nerd Font"
 
 	# Create directory if doesn't exist and return if failed to create directory
@@ -310,40 +265,53 @@ get_font() {
 		group=${line%\"*}
 		group=${group##*/}
 		url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures/${group}/complete"
-		for line in $(fetch "${url}" -); do
-			[ "${line}" ] || continue
-			[ "${line##*Complete*Mono.ttf*}" ] && continue
-			line=${line#*href=\"}
-			line=${line%\"*}
-			fetch "https://github.com${line%/blob/*}/raw/${line#*/blob/}" "${font_dir%/}/JetBrainsMono Nerd Font ${group} Complete.ttf"
+		for subline in $(fetch "${url}" -); do
+			[ "${subline}" ] || continue
+			[ "${subline##*Complete*Mono.ttf*}" ] && continue
+			subline=${subline#*href=\"}
+			subline=${subline%\"*}
+			printf ' - Getting %s\n' "${group}"
+			fetch "https://github.com${subline%/blob/*}/raw/${subline#*/blob/}" "${font_dir%/}/JetBrainsMono Nerd Font ${group} Complete.ttf"
 		done
 	done
 }
 
 
 mktmpfs() {
-	printf "Mounting tmpfs with a size of 512M to /etc/fstab\n"
+	notice "Mounting tmpfs with a size of 512M to /etc/fstab"
 	if ! [ -f "/etc/fstab" ]; then
-		printf "${str_error} /etc/fstab doesn't exist. Exiting.\n" >&2
+		error "/etc/fstab doesn't exist"
 		return 1
 	fi
 
 	while IFS= read -r line; do
+		[ "${line}" ] || continue
 		[ "${line%%tmpfs*/tmp*tmpfs*}" ] && continue
-		printf "${str_error} '/tmp' is already mounted as tmpfs. Exiting.\n" >&2
+		error "'/tmp' is already mounted as tmpfs" >&2
 		return 1
 	done < /etc/fstab
 
-	printf "Do you want to continue?"
-	if ! confirmed; then
+	if ! ask "Continue?"; then
 		printf "Won't add tmpfs to /etc/fstab\n"
 		return
 	fi
-	check_for_root
-	printf "Adding tmpfs to '/etc/fstab'\n"
-	run_as_root 'printf "tmpfs   /tmp         tmpfs   rw,nodev,nosuid,size=512M          0  0\n" >>/etc/fstab'
+	notice "Adding tmpfs to '/etc/fstab'"
+	printf "tmpfs /tmp tmpfs rw,nodev,nosuid,size=512M 0 0\n" >> /etc/fstab
 }
 
+
+mkswapfile() {
+	notice "Creating swapfile at '/swapfile' (1024 MiB)\n"
+
+	[ -f "/swapfile" ] && ! ask "'/swapfile' already exists, overwrite?" &&
+		return 1
+
+	dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
+	chmod 0600 /swapfile
+	mkswap -U clear /swapfile
+	swapon /swapfile
+	printf "/swapfile none swap defaults 0 0\n" >> /etc/fstab
+}
 
 
 # Main Code #
@@ -358,9 +326,21 @@ elif [ "$(command -v stty)" ] && [ "$(command -v dd)" ]; then
 		stty "${tty_settings}"
 	}
 else
-	printf '[\033[1;31mERROR\033[0m] This scripts has to either be run' >&2
-	printf ' with `bash`, or `stty` and `dd` has to be installed.\n' >&2
+	error "This scripts has to either be run with 'bash', or 'stty' and 'dd' has to be installed"
 	exit 1
+fi
+
+if ! [ -w / ]; then
+	opts="
+== Rice ==
+Dotfiles              [git,mv]     | get_dotfiles
+Font (JetBrainsMono)  [wget|curl]  | get_font"
+else
+	ask "You are running this script with elevated permisions, do you want to continue?"
+	opts="
+== System ==
+Mount tmpfs to /tmp   [sudo|su]                         | mktmpfs
+Create Swapfile       [sudo|su,mkswap,swapon,dd,chmod]  | mkswapfile"
 fi
 
 
@@ -384,7 +364,7 @@ while true; do
 	fi
 
 	case ${char} in
-		""|${newline})
+		""|"${newline}")
 			if [ ${selected_opt} -gt ${counter_opt} ]; then
 				printf '\033[A\033[J'
 				break
