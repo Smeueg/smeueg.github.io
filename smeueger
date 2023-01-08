@@ -11,6 +11,7 @@ selected_opt=1
 error() { printf "\033[1;31m|\033[0m%s\n" "${@}" >&2; }
 notice() { printf "\033[1;32m|\033[0m%s\n" "${@}"; }
 
+
 # Asks ${1} and prompts for a Y/n answer
 ask() {
 	printf "\033[33m|\033[0m%b\033[0m" "${1}"
@@ -46,6 +47,7 @@ replace() {
 	printf '%s\n' "${str}"
 }
 
+
 # Prints ${1}, ${2} times
 dup() {
 	i=${2}
@@ -57,13 +59,6 @@ dup() {
 	printf '%s\n' "${str}"
 }
 
-# Tries to run ${@}, else prints an error message and returns
-try() {
-	if ! "${@}"; then
-		error "Failed to run: ${*}"
-		return 1
-	fi
-}
 
 if [ "$(command -v curl)" ]; then
 	fetch() { curl -Ls "${1}" -o "${2}"; }
@@ -233,19 +228,21 @@ get_dotfiles() {
 	fi
 
 	# Clones and configures the repo
-	try git clone --progress --bare --depth 1 "${dot_url}" "${dot_dir}" ||
+	git clone --progress --bare --depth 1 "${dot_url}" "${dot_dir}" ||
 		return 1
-	try git --git-dir="${dot_dir}" config status.showUntrackedFiles no ||
+	git --git-dir="${dot_dir}" config status.showUntrackedFiles no ||
 		return 1
 
 	# Backup files that already exists
-	for file in $(git --git-dir="${dot_dir}" ls-tree --full-tree --name-only -r HEAD); do
+	files=$(git --git-dir="${dot_dir}" ls-tree --full-tree --name-only -r HEAD)
+	for file in ${files}; do
 		if [ -f "${HOME}/${file}" ]; then
 			dot_backup_dir="${HOME}/DotBackups/${file%/*}"
-			mkdir -pv "${dot_backup_dir}" && mv -v "${HOME}/${file}" "${dot_backup_dir}"
+			mkdir -pv "${dot_backup_dir}" &&
+				mv -v "${HOME}/${file}" "${dot_backup_dir}"
 		fi
 	done
-	try git --git-dir="${dot_dir}" --work-tree="${HOME}" checkout "${HOME}"
+	git --git-dir="${dot_dir}" --work-tree="${HOME}" checkout
 }
 
 
