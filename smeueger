@@ -93,7 +93,7 @@ EOF
 
 get_dotfiles() {
 	if [ "$1" ]; then
-		[ "$(command -v gt)" ] || printf "Requires 'git'\n"
+		[ "$(command -v git)" ] || printf "Requires 'git'\n"
 		return
 	fi
 
