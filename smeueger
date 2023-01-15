@@ -1,237 +1,115 @@
 #!/bin/sh
-# Variables #
+#
+# A collection of useful functions to bootstrap Smeueg's personal dotfiles
 
-newline="
-"
 
 selected_tab=1
 selected_opt=1
 
-# Helper Functions #
-error() { printf "\033[1;31m|\033[0m%s\n" "${@}" >&2; }
-notice() { printf "\033[1;32m|\033[0m%s\n" "${@}"; }
 
+# UTILS #
+err() { printf "\033[1;31m|\033[0m %b\n" "$1" >&2; }
+note() { printf "\033[1;32m|\033[0m %b\n" "$1"; }
+warn() { printf "\033[1;33m|\033[0m %b\n" "$1"; }
 
-# Asks ${1} and prompts for a Y/n answer
+if ! [ "$(command -v dd)" ] || ! [ "$(command -v stty)" ]; then
+	err "'dd' and 'stty' are required for this script to run"
+	exit 1
+fi
+
+# Asks the user $1 (a Y/n question), if $2 is provided, print $2 if it the
+# user's reply wasn't a yes
 ask() {
-	printf "\033[33m|\033[0m%b\033[0m" "${1}"
-	printf " [\033[1;32mY\033[0m/\033[1;31mn\033[0m] "
-	read -r line
-	case ${line} in
-		""|[Yy][Ee][Ss]|[Yy]) return 0 ;;
-		*) return 1 ;;
+	printf "%b [\033[1;32mY\033[0m/\033[1;31mn\033[0m] " "$1"
+	read reply
+	printf '\033[A\033[2K'
+	case ${reply} in
+		[Yy][Ee][Ss]|[Yy]|"") return 0;;
+		*) [ "$2" ] && note "$2"; return 1;;
 	esac
 }
 
 
-# Splits ${1} with ${2} as its delimiter
-split() {
-	set -f
-	O_IFS=${IFS}
-	IFS=${2}
-	set -- ${1}
-	printf '%s\n' "${@}"
-	IFS=${O_IFS}
-	set +f
+# Uses curl or wget to download $1 to $2
+fetch() {
+	if [ "$(command -v curl)" ]; then
+		curl -Ls "$1" -o "$2"
+	else
+		wget -q "$1" -O "$2"
+	fi
 }
 
 
-# Replaces every character in ${1} with ${2}
-replace() {
-	i=${#1}
-	str=""
-	while [ ${i} -gt 0 ]; do
-		i=$((i - 1))
-		str="${str}${2}"
-	done
-	printf '%s\n' "${str}"
+# Read 1 character
+read_char() {
+	tty_settings=$(stty -g)
+	stty -icanon -echo
+	char=$(dd ibs=1 count=1 2>&1)
+	char=${char%${char#?}}
+	stty "${tty_settings}"
 }
 
-
-# Prints ${1}, ${2} times
-dup() {
-	i=${2}
-	str=""
-	while [ ${i} -gt 0 ]; do
-		i=$((i - 1))
-		str="${str}${1}"
-	done
-	printf '%s\n' "${str}"
-}
+newline="
+"
 
 
-if [ "$(command -v curl)" ]; then
-	fetch() { curl -Ls "${1}" -o "${2}"; }
-elif [ "$(command -v wget)" ]; then
-	fetch() { wget --no-hsts "${1}" -O "${2}"; }
+# Declaring options. The format is as follows:
+# == HEADER ==
+# Name1         | func1
+# Name2         | func2
+if ! [ -w / ]; then
+	while read -r line; do
+		opts="${opts}${line}${newline}"
+	done <<-EOF
+	== Rice ==
+	Dotfiles             | get_dotfiles
+	Font (JetBrainsMono) | get_font
+	EOF
+else
+	msg="You are running this with root privilages, are you sure?"
+	msg="${msg} (This will also change the available options)"
+	ask "${msg}" || exit 0
+	while read -r line; do
+		opts="${opts}${line}${newline}"
+	done <<-EOF
+	== System ==
+	Mount tmpfs to /tmp | mktmpfs
+	Create Swapfile     | mkswapfile
+	EOF
 fi
 
 
-# UI Functions #
-# Setups the options (Dependency checking)
-opts_setup() {
-	for line in ${1}; do
-		if ! [ "${line##== * ==}" ]; then
-			printf '%s\n' "${line}"
-			continue
-		fi
-
-		# Gets the label/name
-		label=${line%%\[*}
-		label=${label%${label##*[^ ]}}
-
-		# Gets missing dependencies
-		dep_missing=""
-		deps=${line##*\[}
-		deps=${deps%%\]*}
-		for dep in $(split "${deps}" ","); do
-			if ! [ "${dep##*|*}" ]; then
-				run=false
-				for dep_optional in $(split "${dep}" "|"); do
-					if [ "$(command -v "${dep_optional}")" ]; then
-						run=true
-						break
-					fi
-				done
-				${run} || dep_missing="${dep_missing} ${dep}"
-			else
-				[ "$(command -v "${dep}")" ] ||
-					dep_missing="${dep_missing} ${dep}"
-			fi
-		done
-		dep_missing=${dep_missing# }
-
-		if [ "${dep_missing}" ]; then
-			dep_missing=" [Requires: ${dep_missing}]"
-			label="[-] ${label}"
-		else
-			label="[ ] ${label}"
-		fi
-		line="${label}${dep_missing} |${line##*\|}"
-
-		printf '%b\n' "${line}"
-	done
-}
+str_controls=""
+while read -r line; do
+	str_controls="${str_controls}${line}${newline}"
+done <<-EOF
+\033[1;33mh\033[0m/\033[1;33m←\033[0m: Select previous tab
+\033[1;33mj\033[0m/\033[1;33m↓\033[0m: Move down
+\033[1;33mk\033[0m/\033[1;33m↑\033[0m: Move up
+\033[1;33ml\033[0m/\033[1;33m→\033[0m: Select next tab
+\033[1;33mEnter\033[0m: Press
+EOF
 
 
-# Prints the UI
-opts_print() {
-	O_IFS=${IFS}
-	IFS=${newline}
-	str_tab=""
-	str_choices=""
-	counter_opt=0
-	counter_tab=0
-	width=0
-	continue="Continue"
-	for line in ${1}; do
-		# Creates the tab string
-		if ! [ "${line##== * ==}" ]; then
-			counter_tab=$((counter_tab + 1))
-			line=${line#== }
-			line=${line% ==}
-
-			if [ ${counter_tab} -eq ${selected_tab} ]; then
-				str_tab="${str_tab}\033[1;33m ${line} \033[0m"
-				str_tab="${str_tab}\033[${#line}D\033[3D\033[B╯ "
-				str_tab="${str_tab}$(replace "${line}" ' ') ╰\b\033[A"
-			else
-				str_tab="${str_tab} ${line} "
-				str_tab="${str_tab}\033[B┴\033[A\b"
-			fi
-			str_tab="${str_tab}\033[A┬\033[B\b│"
-			str_tab_char_count=$((str_tab_char_count + ${#line} + 1))
-			continue
-		fi
-		[ ${counter_tab} -ne ${selected_tab} ] && continue
-		counter_opt=$((counter_opt + 1))
-		# Creates the choices string
-		line=${line%% | *}
-		[ ${#line} -gt ${width} ] && width=${#line}
-		[ "${line%%\[-\] *}" ] || line="\033[1;31m${line}\033[0m"
-		[ ${counter_opt} -eq ${selected_opt} ] && line="\033[7m${line}\033[0m"
-		str_choices="${str_choices}${line}${newline}"
-	done
-
-	str_width=$(dup "─" "${width}")
-	printf '╭┬%s\b╮\033[B\b│\033[A\n\n├┴%s\b┤\r\033[A' "${str_width}" "${str_width}"
-	printf '││%b\n\n' "${str_tab}"
-
-	# Prints the choices
-	[ ${selected_opt} -gt ${counter_opt} ] &&
-		continue="\033[7m${continue}\033[0m"
-	for line in ${str_choices}; do
-		printf "%$((width + 1))s│\r│%b\n" "" "${line}"
-	done
-	printf '╰%s╯\r\033[2C %b \n' "${str_width}" "${continue}"
-	printf "\033[%sA\033[4A" "${counter_opt}"
-	IFS=${O_IFS}
-}
-
-
-# Select/Deselect chosen option
-opts_select() {
-	O_IFS=${IFS}
-	IFS=${newline}
-	counter_tab=0
-	counter_opt=0
-
-	for line in ${1}; do
-		if ! [ "${line##== * ==}" ]; then
-			counter_tab=$((counter_tab + 1))
-			counter_opt=0
-			printf '%s\n' "${line}"
-			continue
-		fi
-		counter_opt=$((counter_opt + 1))
-
-		if [ ${counter_tab} -eq ${selected_tab} ] && [ ${counter_opt} -eq ${selected_opt} ]; then
-			if ! [ "${line%%\[ \]*}" ]; then
-				printf '[*]%s\n' "${line#\[ \]}"
-			elif ! [ "${line%%\[\*\]*}" ]; then
-				printf '[ ]%s\n' "${line#\[\*\]}"
-			else
-				printf '%s\n' "${line}"
-			fi
-		else
-			printf '%s\n' "${line}"
-		fi
-	done
-	IFS=${O_IFS}
-}
-
-
-# Runs installs/run the chosen options
-opts_run() {
-	for line in ${1}; do
-		[ "${line##== * ==}" ] || continue
-		[ "${line%%\[ \]*}" ] || continue
-		"${line##*| }"
-	done
-}
-
-
-
-# Install Functions #
 get_dotfiles() {
+	if [ "$1" ]; then
+		[ "$(command -v gt)" ] || printf "Requires 'git'\n"
+		return
+	fi
+
+	note "Getting Dotfiles"
 	dot_dir="${HOME}/.local/dots/"
 	dot_url="https://github.com/Smeueg/Dotfiles.git"
-	# Confirms to overwrite an already existing repo if it exists
-	notice "Getting Dotfiles"
+
 	if [ -d "${dot_dir}" ]; then
-		if ! ask "'\033[35m${dot_dir}\033[0m' already exists, overwrite?"; then
-			printf 'Will not overwrite\n'
+		ask "'${dot_dir}' already exists, overwrite?" \
+			"Will not overwrite '${dot_dir}'" ||
 			return 1
-		else
-			rm -rf "${dot_dir}"
-		fi
 	fi
 
 	# Clones and configures the repo
-	git clone --progress --bare --depth 1 "${dot_url}" "${dot_dir}" ||
-		return 1
-	git --git-dir="${dot_dir}" config status.showUntrackedFiles no ||
-		return 1
+	git clone --progress --bare --depth 1 "${dot_url}" "${dot_dir}" || return 1
+	git --git-dir="${dot_dir}" config status.showUntrackedFiles no || return 1
 
 	# Backup files that already exists
 	files=$(git --git-dir="${dot_dir}" ls-tree --full-tree --name-only -r HEAD)
@@ -242,66 +120,76 @@ get_dotfiles() {
 				mv -v "${HOME}/${file}" "${dot_backup_dir}"
 		fi
 	done
+
 	git --git-dir="${dot_dir}" --work-tree="${HOME}" checkout
 }
 
 
 get_font() {
-	font_dir="${HOME}/.local/share/fonts/"
-	font_dir="${font_dir%/}/JetBrainsMono Nerd Font"
+	if [ "$1" ]; then
+		{ [ "$(command -v curl)" ] || [ "$(command -v wget)" ]; } ||
+			printf "Requires 'curl' or 'wget'\n"
+		return
+	fi
 
-	# Create directory if doesn't exist and return if failed to create directory
+	note "Getting Fonts"
+	font_dir="${HOME}/.local/share/fonts/JetBrainsMono Nerd Font/"
+	font_url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures"
 	mkdir -pv "${font_dir}" || return 1
 
-	notice "Downloading fonts"
-	url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures"
-	for line in $(fetch "${url}" -); do
+	for line in $(fetch "${font_url}" -); do
 		[ "${line}" ] || continue
-		[ "${line##*/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures/*}" ] && continue
+		[ "${line##*/tree/master/patched-fonts/JetBrainsMono/Ligatures/*}" ] &&
+			continue
 		group=${line%\"*}
 		group=${group##*/}
 		url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures/${group}/complete"
-		for subline in $(fetch "${url}" -); do
-			[ "${subline}" ] || continue
-			[ "${subline##*Complete*Mono.ttf*}" ] && continue
-			subline=${subline#*href=\"}
-			subline=${subline%\"*}
-			printf ' - Getting %s\n' "${group}"
-			fetch "https://github.com${subline%/blob/*}/raw/${subline#*/blob/}" "${font_dir%/}/JetBrainsMono Nerd Font ${group} Complete.ttf"
+		for line in $(fetch "${url}" -); do
+			[ "${line}" ] || continue
+			[ "${line##*Complete*Mono.ttf*}" ] && continue
+			line=${line#*\"}
+			line=${line%\"*}
+			printf " - Getting %s\n" "${group}"
+			url="https://github.com${line%/blob/*}/raw/${line#*/blob/}"
+			fetch "${url}" "${font_dir}/JetBrainsMono Nerd Font ${group}.ttf"
 		done
 	done
 }
 
 
 mktmpfs() {
-	notice "Mounting tmpfs with a size of 512M to /etc/fstab"
-	if ! [ -f "/etc/fstab" ]; then
-		error "/etc/fstab doesn't exist"
-		return 1
+	if [ "$1" ]; then
+		[ -f /etc/fstab ] || { printf "'/etc/fstab' not found\n"; return; }
+		[ -w / ] || { printf "Requires root privilages\n"; return; }
+		# Check in /etc/fstab
+		while read -r line; do
+			[ "${line}" ] || continue
+			[ "${line%%*tmpfs */tmp *tmpfs*}" ] && continue
+			printf "Already in '/etc/fstab'\n"
+			return
+		done < /etc/fstab
 	fi
 
-	while IFS= read -r line; do
-		[ "${line}" ] || continue
-		[ "${line%%tmpfs*/tmp*tmpfs*}" ] && continue
-		error "'/tmp' is already mounted as tmpfs" >&2
-		return 1
-	done < /etc/fstab
-
-	if ! ask "Continue?"; then
-		printf "Won't add tmpfs to /etc/fstab\n"
-		return
-	fi
-	notice "Adding tmpfs to '/etc/fstab'"
+	note "Adding entry '/etc/fstab' (tmpfs in '/tmp', 512 Mb)"
 	printf "tmpfs /tmp tmpfs rw,nodev,nosuid,size=512M 0 0\n" >> /etc/fstab
 }
 
 
 mkswapfile() {
-	notice "Creating swapfile at '/swapfile' (1024 MiB)\n"
+	if [ "$1" ]; then
+		if [ "$(command -v swapon)" ]; then
+			printf "Command 'swapon' not found\n"
+			return
+		fi
+		if [ "$(command -v mkswap)" ]; then
+			printf "Command 'mkswap' not found\n"
+			return
+		fi
+		[ -w / ] || { printf "Requires root privilages\n"; return; }
+		[ -f /swapfile ] && { printf "'/swapfile' already exists\n"; return; }
+	fi
 
-	[ -f "/swapfile" ] && ! ask "'/swapfile' already exists, overwrite?" &&
-		return 1
-
+	note "Creaing and mounting swapfile (as '/swapfile', 1024 Mb)"
 	dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress
 	chmod 0600 /swapfile
 	mkswap -U clear /swapfile
@@ -310,72 +198,187 @@ mkswapfile() {
 }
 
 
-# Main Code #
-if [ "${BASH}" ]; then
-	read_c() { read -rn1 char; }
-elif [ "$(command -v stty)" ] && [ "$(command -v dd)" ]; then
-	read_c() {
-		tty_settings=$(stty -g)
-		stty -icanon
-		char=$(dd ibs=1 count=1 2>&1)
-		char=${char%${char#?}}
-		stty "${tty_settings}"
-	}
-else
-	error "This scripts has to either be run with 'bash', or 'stty' and 'dd' has to be installed"
-	exit 1
-fi
-
-if ! [ -w / ]; then
-	opts="
-== Rice ==
-Dotfiles              [git,mv]     | get_dotfiles
-Font (JetBrainsMono)  [wget|curl]  | get_font"
-else
-	ask "You are running this script with elevated permisions, do you want to continue?"
-	opts="
-== System ==
-Mount tmpfs to /tmp   [sudo|su]                         | mktmpfs
-Create Swapfile       [sudo|su,mkswap,swapon,dd,chmod]  | mkswapfile"
-fi
+ui_setup() {
+	while read -r line; do
+		[ "${line}" ] || continue
+		if [ "${line##== * ==}" ]; then
+			func=${line##*\| }
+			msg=$(${func} 1)
+			line=${line%\|*}
+			line=${line%${line##*[^ ]}}
+			if [ "${msg}" ]; then
+				printf "\033[31m[ ] %s %s\033[0m|%s\n" \
+					   "${line}" \
+					   "[${msg}]" \
+					   "${func}"
+				len=$((${#line}))
+			else
+				printf "[ ] %s|%s\n" "${line}" "${func}"
+				len=$((${#line}))
+			fi
+		else
+			printf "%s\n" "${line}"
+		fi
+	done <<-EOF
+	${opts}
+	EOF
+}
 
 
-trap "printf '\r\033[J'; exit 130" INT
-opts=$(IFS=${newline} opts_setup "${opts}")
-while true; do
-	IFS=${newline} opts_print "${opts}"
-	read_c
-	printf '\r\033[J'
-	# Controls
+ui_get_max() {
+	max=0
+	while read -r line; do
+		line=${line%\|*}
+		line=${line%$(printf "\033[0m")}
+		line=${line#$(printf "\033[31m")}
+		[ ${#line} -gt ${max} ] && max=${#line}
+	done <<-EOF
+	${opts}
+	EOF
+}
 
-	if [ "${char}" = "$(printf '\033')" ]; then
-		read_c
-		read_c
-		case ${char} in
-			"A") char="k" ;;
-			"B") char="j" ;;
-			"C") char="l" ;;
-			"D") char="h" ;;
-		esac
+
+ui_set_tablist() {
+	str_tab=
+	i=0
+	while read -r line; do
+		[ "${line#== * ==}" ] && continue
+		line=${line#== }
+		line=${line% ==}
+		space=
+
+		while [ ${#space} -ne ${#line} ]; do
+			space="${space} "
+		done
+
+		i=$((i + 1))
+		if [ ${i} -eq ${selected_tab} ]; then
+			str_tab="${str_tab}\033[A┬\033[B\033[D│ \033[1;33m${line}\033[0m "
+			str_tab="${str_tab}\033[A┬\033[B\033[D│"
+			str_tab="${str_tab}\033[B\033[${#line}D\033[4D┘ ${space} └"
+			str_tab="${str_tab}\033[A"
+		else
+			str_tab="${str_tab}\033[A┬\033[2B\033[D┴\033[D\033[A│ ${line} │"
+			str_tab="${str_tab}\033[A\033[D┬\033[2B\033[D┴\033[A"
+		fi
+	done <<-EOF
+	${opts}
+	EOF
+}
+
+
+ui_set_border() {
+	border=
+	i=0
+	while [ ${i} -ne ${max} ]; do
+		border="${border}─"
+		i=$((i + 1))
+	done
+}
+
+
+ui_display() {
+	printf "%s\n\n" "┌${border}┐"
+	printf "%s\n" "├${border}┤"
+	printf "\033[2A%*s │\r%b\n\n" ${max} "" "│${str_tab}"
+	i_tab=0
+	i_opt=0
+	while read -r line; do
+		if ! [ "${line##== * ==}" ]; then
+			i_tab=$((i_tab + 1))
+			[ ${i_tab} -eq ${selected_tab} ] &&
+				i_opt=0
+			continue
+		fi
+		[ ${i_tab} -eq ${selected_tab} ] || continue
+
+		i_opt=$((i_opt + 1))
+		if [ ${i_opt} -eq ${selected_opt} ]; then
+			printf "%*s │\r│\033[7m%b\033[0m\n" ${max} "" "${line%\|*}"
+		else
+			printf "%*s │\r│%b\n" ${max} "" "${line%\|*}"
+		fi
+	done <<-EOF
+	${opts}
+	EOF
+
+	if [ ${selected_opt} -eq $((i_opt + 1)) ]; then
+		printf "%s\r\033[2C\033[7m Continue \033[0m\n" "└${border}┘"
+	else
+		printf "%s\r\033[2C Continue \n" "└${border}┘"
 	fi
+}
+
+
+ui_select(){
+	i_tab=0
+	i_opt=0
+	while read -r line; do
+		if ! [ "${line##== * ==}" ]; then
+			i_tab=$((i_tab + 1))
+			[ ${i_tab} -eq ${selected_tab} ] &&
+				i_opt=0
+			printf "%s\n" "${line}"
+			continue
+		fi
+		if ! [ ${i_tab} -eq ${selected_tab} ]; then
+			printf "%b\n" "${line}"
+			continue
+		fi
+		i_opt=$((i_opt + 1))
+
+		if [ ${i_opt} -eq ${selected_opt} ]; then
+			if ! [ "${line%%*$(printf '\033[31m\n')*}" ]; then
+				printf "%b\n" "${line}"
+			elif [ "${line##*\[ \]*}" ]; then
+				printf "%b\n" "${line%%\[X\]*}[ ]${line#*\[X\]}"
+			else
+				printf "%b\n" "${line%%\[ \]*}[X]${line#*\[ \]}"
+			fi
+		else
+			printf "%s\n" "${line}"
+		fi
+		done <<-EOF
+	${opts}
+	EOF
+}
+
+
+printf "%b" "${str_controls}"
+opts=$(ui_setup)
+ui_get_max
+ui_set_tablist
+ui_set_border
+while true; do
+	ui_display
+	read_char
 
 	case ${char} in
-		""|"${newline}")
-			if [ ${selected_opt} -gt ${counter_opt} ]; then
-				printf '\033[A\033[J'
-				break
-			fi
-			opts=$(opts_select "${opts}");
-			selected_opt=$((selected_opt+(selected_opt!=counter_opt)))
-			printf '\033[A'
+		h) selected_tab=$((selected_tab - (selected_tab != 1)))
+		   ui_set_tablist
+		   ;;
+		j) selected_opt=$((selected_opt + (selected_opt != i_opt + 1))) ;;
+		k) selected_opt=$((selected_opt - (selected_opt != 1))) ;;
+		l) selected_tab=$((selected_tab + (selected_tab != i_tab)))
+		   ui_set_tablist
+		   ;;
+		q) printf "%b\033[9A\r\033[J" "\033[${i_opt}A"
+		   exit
+		   ;;
+		${newline})
+			[ ${selected_opt} -eq $((i_opt + 1)) ] && break
+			opts=$(ui_select)
+			selected_opt=$((selected_opt + (selected_opt != i_opt)))
 			;;
-		"h") selected_tab=$((selected_tab-(selected_tab!=1)));;
-		"j") selected_opt=$((selected_opt+(selected_opt<=counter_opt)));;
-		"k") selected_opt=$((selected_opt-(selected_opt!=1)));;
-		"l") selected_tab=$((selected_tab+(selected_tab!=counter_tab)));;
-		"q") exit 0 ;;
 	esac
+	printf "%b\033[4A\r\033[J" "\033[${i_opt}A"
 done
 
+printf "%b\033[944A\r\033[J" "\033[${i_opt}A"
 
-IFS=${newline} opts_run "${opts}"
+while read -r line; do
+	[ "${line%%\[X\]*}" ] && continue
+	${line##*\|}
+done <<-EOF
+${opts}
+EOF
