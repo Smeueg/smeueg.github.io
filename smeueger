@@ -1,6 +1,8 @@
 #!/bin/sh
 #
 # A collection of useful functions to bootstrap Smeueg's personal dotfiles
+# TODO: Add gruvbox gtk theme
+#       (also modify configure_lightdm() to support it as well)
 
 
 selected_tab=1
@@ -75,6 +77,7 @@ else
 	== System ==
 	Mount tmpfs to /tmp | mktmpfs
 	Create Swapfile     | mkswapfile
+	Configure LightDM   | configure_lightdm
 	EOF
 fi
 
@@ -168,6 +171,7 @@ mktmpfs() {
 			printf "Already in '/etc/fstab'\n"
 			return
 		done < /etc/fstab
+		return
 	fi
 
 	note "Adding entry '/etc/fstab' (tmpfs in '/tmp', 512 Mb)"
@@ -177,11 +181,11 @@ mktmpfs() {
 
 mkswapfile() {
 	if [ "$1" ]; then
-		if [ "$(command -v swapon)" ]; then
+		if ! [ "$(command -v swapon)" ]; then
 			printf "Command 'swapon' not found\n"
 			return
 		fi
-		if [ "$(command -v mkswap)" ]; then
+		if ! [ "$(command -v mkswap)" ]; then
 			printf "Command 'mkswap' not found\n"
 			return
 		fi
@@ -198,6 +202,21 @@ mkswapfile() {
 }
 
 
+configure_lightdm() {
+	if [ "$1" ]; then
+		if ! [ -f /etc/lightdm/lightdm-gtk-greeter.conf ]; then
+			printf "LightDM GTK Greeter not installed\n"
+			return
+		fi
+		[ -w / ] || { printf "Requires root privilages\n"; return; }
+		return
+	fi
+
+	printf "[greeter]\nbackground = #282828\n" > /etc/lightdm/lightdm-gtk-greeter.conf
+}
+
+
+# UI #
 ui_setup() {
 	while read -r line; do
 		[ "${line}" ] || continue
