@@ -212,7 +212,9 @@ configure_lightdm() {
 		return
 	fi
 
-	printf "[greeter]\nbackground = #282828\n" > /etc/lightdm/lightdm-gtk-greeter.conf
+	note "Configuring LightDM"
+	printf "[greeter]\n" > /etc/lightdm/lightdm-gtk-greeter.conf
+	printf "background = #282828\n" >> /etc/lightdm/lightdm-gtk-greeter.conf
 }
 
 
