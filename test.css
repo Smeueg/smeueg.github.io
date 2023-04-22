@@ -1,0 +1,31 @@
+html {
+	width: 100%;
+	height: 100%;
+}
+
+body {
+	--width: .25em;
+	--bg1: #282828;
+	--bg2: #303030;
+	background: var(--bg1);
+	background-image:
+		radial-gradient(
+			circle,
+			transparent calc(var(--width) + .05em),
+			var(--bg1) calc(var(--width) + .05em)
+		),
+		linear-gradient(
+			var(--bg2) var(--width),
+			transparent var(--width)
+		),
+		linear-gradient(
+			90deg,
+			var(--bg2) var(--width),
+			transparent var(--width)
+		);
+	background-size: 5% 5%;
+	background-position:
+		calc(50% + var(--width) / 2) calc(50% + var(--width) / 2),
+		0 0,
+		0 0;
+}
