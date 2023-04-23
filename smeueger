@@ -149,7 +149,7 @@ get_font() {
 		url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures/${group}/complete"
 		for line in $(fetch "${url}" -); do
 			[ "${line}" ] || continue
-			[ "${line##*Complete*Mono.ttf*}" ] && continue
+			[ "${line##*Complete%20Mono%20${group}.ttf*}" ] && continue
 			line=${line#*\"}
 			line=${line%\"*}
 			printf " - Getting %s\n" "${group}"
