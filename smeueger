@@ -191,6 +191,7 @@ mkswapfile() {
 		fi
 		[ -w / ] || { printf "Requires root privilages\n"; return; }
 		[ -f /swapfile ] && { printf "'/swapfile' already exists\n"; return; }
+		return
 	fi
 
 	note "Creaing and mounting swapfile (as '/swapfile', 1024 Mb)"
