@@ -39,9 +39,9 @@ items_add() {
 }
 
 help="\
-Usage: ${0##*/} [-h] [ITEMS]...
+Usage: smeueger [-h] [ITEMS]...
 
-  Sets up the current system with [ITEMS]. If ${0##*/} is ran as root, then
+  Sets up the current system with [ITEMS]. If smeueger is ran as root, then
   [ITEMS] will also change to configure the system
 
 Items as non root:
@@ -64,7 +64,7 @@ Items as root:
 
 
 if ! [ "${1}" ]; then
-    err "No arguments specified, try '${0##*/} --help' for more information"
+    err "No arguments specified, try 'smeueger --help' for more information"
     exit 65
 fi
 
