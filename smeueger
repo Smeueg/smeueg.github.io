@@ -39,7 +39,7 @@ items_add() {
 }
 
 help="\
-Usage: ${0##*/} [-h] [ITEMS]...
+Usage: smeueger [-h] [ITEMS]...
 
   Sets up the current system with [ITEMS]. If ${0##*/} is ran as root, then
   [ITEMS] will also change to configure the system
