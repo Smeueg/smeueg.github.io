@@ -207,32 +207,14 @@ dotfiles() {
 
 
 fonts() {
+    font_dir="${HOME}/.local/share/fonts/"
+	font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
 
-    font_dir="${HOME}/.local/share/fonts/JetBrainsMono Nerd Font/"
-	font_url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures"
-
-    if ! { [ -d "${font_dir}" ] || mkdir -p "${font_dir}"; }; then
-        err "Failed to create '${font_dir}'"
-        return 1
-    fi
-
-	for line in $(get "${font_url}" -); do
-		[ "${line}" ] || continue
-		[ "${line##*/tree/master/patched-fonts/JetBrainsMono/Ligatures/*}" ] &&
-			continue
-		group=${line%\"*}
-		group=${group##*/}
-		url="https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/JetBrainsMono/Ligatures/${group}"
-		for line in $(get "${url}" -); do
-			[ "${line}" ] || continue
-			[ "${line##*href*}" ] && continue
-			[ "${line##*JetBrainsMonoNerdFontMono*}" ] && continue
-			line=${line#*\"}
-			line=${line%\"*}
-			url="https://github.com${line%/blob/*}/raw/${line#*/blob/}"
-			printf "Downloading JetBrains Mono Nerd Font %s\n" "${group}"
-			get "${url}" "${font_dir}/JetBrainsMono Nerd Font ${group}.ttf"
-		done
+    for font in "JetBrainsMono" "Gohu"; do
+        printf "Downloading '%s Nerd Font'\n"
+        mkdir -pv "${font_dir}/${font}NerdFont"
+        get "${font_url}/${font}.tar.xz" - |
+            tar -xJf - -C "${font_dir}/${font}NerdFont"
     done
 }
 
