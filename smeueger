@@ -1,5 +1,4 @@
 #!/bin/sh
-
 items=
 
 warn() {
@@ -91,11 +90,12 @@ Items as non root:
   matter    Installs 'matter' to '/tmp/', a tool to rice 'grub'
 
 Items as root:
-  tmpfs       Mounts '/tmp/' as tmpfs with a size of 512MB
-  swapfile    Creates a swapfile with a size of 4GB, requires 'mkswap' and
-              'swapon'
-  lightdm     Configures lightdm to use the gruvbox color scheme
-  ly          Installs the ly display manager
+  tmpfs         Mounts '/tmp/' as tmpfs with a size of 512MB
+  swapfile      Creates a swapfile with a size of 4GB, requires 'mkswap' and
+                'swapon'
+  lightdm       Configures lightdm to use the gruvbox color scheme
+  ly            Installs the ly display manager
+  touchpad_tap  Configures the touchpad to enable click on tap
 "
 
 
@@ -134,6 +134,13 @@ if [ -w / ]; then
                 check_deps ly "cc make git sed"
                 check_libs ly "pam xcb"
                 items_add ly
+                ;;
+            touchpad_tap)
+                if ! [ -d "/etc/X11/xorg.conf.d/" ]; then
+                    err "touchpad_tap: '/etc/X11/xorg.conf.d/' does not exist"
+                    exit 2
+                fi
+                items_add touchpad_tap
                 ;;
             lightdm)
                 if ! [ -f /etc/lightdm/lightdm-gtk-greeter.conf ]; then
@@ -345,6 +352,19 @@ ly() {
         printf "term_reset_cmd = /usr/bin/tput reset; /usr/bin/printf '%%b' '%s'\n" \
                "${escape_sequence_printf}" >> /etc/ly/config.ini
     fi
+}
+
+
+touchpad_tap() {
+    printf "%s\n" \
+           'Section  "InputClass"' \
+           '    Identifier  "touchpad overrides"' \
+           '    Driver "libinput"' \
+           '    MatchIsTouchpad "on"' \
+           '    Option "Tapping" "on"' \
+           '    Option "TappingButtonMap" "lmr"' \
+           'EndSection' \
+           > /etc/X11/xorg.conf.d/99-synaptics-overrides.conf
 }
 
 
