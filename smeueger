@@ -12,6 +12,7 @@
 # - A swapfile (/swapfile 1Gb)
 # - LightDM (Gruvbox background)
 # - Ly
+# - auto-cpufreq
 # - Enabling tap to click on a touchpad
 items=
 
@@ -114,6 +115,7 @@ Items as non root:
   dotfiles  Downloads and sets up Smeueg's personal dotfiles
   fonts     Installs the JetBrainsMono Nerd Font in '~/.local/share/fonts/'
   rustup    Installs 'rustup'
+  lua_lsp   Installs lua-language-server
   flathub   Sets up Flathub for Flatpak
   gtk       Sets up a gruvbox theme for GTK using:
               - https://github.com/jmattheis/gruvbox-dark-gtk
@@ -126,6 +128,7 @@ Items as root:
                 'swapon'
   lightdm       Configures lightdm to use the gruvbox color scheme
   ly            Installs the ly display manager
+  auto_cpufreq  Installs auto-cpufreq
   touchpad_tap  Configures the touchpad to enable click on tap
 "
 
@@ -166,22 +169,26 @@ if [ -w / ]; then
                 check_libs ly "pam xcb"
                 items_add ly
                 ;;
+            auto_cpufreq)
+                check_deps auto_cpufreq "git"
+                items_add auto_cpufreq
+                ;;
             touchpad_tap)
                 if ! [ -d "/etc/X11/xorg.conf.d/" ]; then
                     err "touchpad_tap: '/etc/X11/xorg.conf.d/' does not exist"
                     exit 2
                 fi
                 items_add touchpad_tap
-                ;;
-            lightdm)
-                if ! [ -f /etc/lightdm/lightdm-gtk-greeter.conf ]; then
-                    err "'/etc/lightdm/lightdm-gtk-greeter.conf' doesn't exist"
-                    exit 2
-                fi
-                items_add lightdm
-                ;;
-            -h | --help) printf "%s\n" "${help%?}"; exit 0 ;;
-            *) err "Invalid item '${arg}'"; exit 1 ;;
+                         ;;
+                         lightdm)
+                             if ! [ -f /etc/lightdm/lightdm-gtk-greeter.conf ]; then
+                                 err "'/etc/lightdm/lightdm-gtk-greeter.conf' doesn't exist"
+                                 exit 2
+                             fi
+                             items_add lightdm
+                             ;;
+                         -h | --help) printf "%s\n" "${help%?}"; exit 0 ;;
+                         *) err "Invalid item '${arg}'"; exit 1 ;;
         esac
     done
 else
@@ -195,6 +202,16 @@ else
             rustup)
                 check_curl_wget rustup
                 items_add rustup
+                ;;
+            lua_lsp)
+                check_deps lua_lsp "tar uname"
+                check_curl_wget lua_lsp
+                os=$(uname)
+                if ! { [ "${os}" = "Linux" ] || [ "${os}" = "Darwin" ]; }; then
+                    err "lua_lsp: Only supports Linux and MacOS"
+                    exit 1
+                fi
+                items_add lua_lsp
                 ;;
             dotfiles)
                 check_deps dotfiles "git"
@@ -382,6 +399,56 @@ ly() {
         printf "term_reset_cmd = /usr/bin/tput reset; /usr/bin/printf '%%b' '%s'\n" \
                "${escape_sequence_printf}" >> /etc/ly/config.ini
     fi
+}
+
+
+lua_lsp() {
+    dir="${HOME}/.local/share/lua-language-server/"
+    if ! mkdir -pv "${dir}"; then
+        err "Failed to create directory '${dir}'"
+        return 1
+    fi
+
+    json=$(curl -s https://api.github.com/repos/LuaLS/lua-language-server/releases/latest)
+    arch=$(uname -m)
+    os=$(uname)
+    file_suffix=""
+    script="${HOME}/.local/bin/lua-language-server"
+
+    if [ "${os}" = "Linux" ]; then
+        file_suffix="${file_suffix}linux"
+    elif [ "${os}" = "Darwin" ]; then
+        file_suffix="${file_suffix}darwin"
+    fi
+    if [ "${arch}" = "x86_64" ]; then
+        file_suffix="${file_suffix}-x64"
+    elif [ "${arch}" = "x86_64" ]; then
+        file_suffix="${file_suffix}-arm64"
+    fi
+    file_suffix="${file_suffix}.tar.gz"
+
+    for line in ${json}; do
+        [ "${line##*/*${file_suffix}*}" ] && continue
+        url=${line}
+        url=${url#\"}
+        url=${url%\"}
+        break
+    done
+
+    get "${url}" - | tar -xzf - -C "${dir}"
+    printf "#!/bin/sh\n" > "${script}"
+    printf 'exec "${HOME}/.local/share/lua-language-server/bin/lua-language-server" "$@"\n' >> "${script}"
+}
+
+
+auto_cpufreq() {
+    repo_url="https://github.com/AdnanHodzic/auto-cpufreq"
+    repo_dir="/tmp/auto-cpufreq/"
+    if ! git clone "${repo_url}" "${repo_dir}"; then
+        err "Failed to clone '${repo_url}' to '${repo_dir}'"
+        return 1
+    fi
+    "${repo_dir}/auto-cpufreq-installer"
 }
 
 
