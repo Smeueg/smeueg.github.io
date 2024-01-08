@@ -1,250 +1,544 @@
-#!/bin/sh
+#!/bin/bash
 # @name smeueger
-# @brief A script to set up a Linux system
-# @description A script to set up a Linux system with
-# - Smeueg's dotfiles (https://github.com/Smeueg/Dotfiles)
-# - Fonts (JetBrainsMono Nerd Font & Gohu Nerd Font)
-# - Rustup
-# - Flathub
-# - GTK (A GTK theme alongside an icon pack with Gruvbox colors)
-# - Matter
-# - TMPFS (on /tmp)
-# - A swapfile (/swapfile 1Gb)
-# - LightDM (Gruvbox background)
-# - Ly
-# - auto-cpufreq
-# - Enabling tap to click on a touchpad
-items=
+# @brief An interactive script to set up a Smeueg's personalized Linux system
+# @description Easy installation/setup for:
+# * Smeueg's Dotfiles (https://github.com/Smeueg/Dotfiles)
+# * JetBrainsMono Nerd Font
+# * A GTK theme and icons (Gruvbox-dark)
+#   * https://github.com/jmattheis/gruvbox-dark-gtk
+#   * https://github.com/jmattheis/gruvbox-dark-icons-gtk
+# * Flathub
+# * TMPFS (on /tmp)
+# * A swapfile (on /swapfile 1Gb)
+# * auto-cpufreq(1)
+# * rustup(1)
+# * Tap to click on a touchpad
 
-# @description Outputs a formatted string to warn the user to stdout
-# @arg $1 string The warning message
+
+# @section Exit codes
+exit_code_library_not_found=127
+exit_code_command_not_found=127
+exit_code_permission_denied=1
+exit_code_file_not_found=2
+
+# @section Helper Variables
+original_ifs=${IFS}
+tab=$(printf "\t")
+newline="
+"
+
+# @section Color Variables
+color_selected=4
+color_unselected=239
+color_header=7
+color_box=5
+color_error=1
+color_warning=3
+
+# @section Helper Functions
+
+# Print a formatted error message
+# @arg $1 string The message
+# @stderr The error message
+error() {
+    printf "[\033[38;5;${color_error}mERR\033[m] %s\n" "${1}"
+}
+
+# Print a formatted warning message
+# @arg $1 string The message
+# @stdout The error message
 warn() {
-    printf "[\033[1;33mWARNING\033[m] %b\n" "${1}"
+    printf "[\033[38;5;${color_warning}mWARN\033[m] %s\n" "${1}"
 }
 
-# @description Outputs a formatted string as an error to stderr
-# @arg $1 string The error message
-err() {
-    printf "[\033[1;31mERROR\033[m] %b\n" "${1}" >&2
+# Print a formatted info message
+# @arg $1 string The message
+# @stdout The info message
+info() {
+    printf "[\033[38;5;${color_info}mINFO\033[m] %s\n" "${1}"
 }
 
-# @description Checks whether a list of executables exists
-# @arg $1 item The associated item
-# @arg $2 executables The list of executables to check as a single string
-check_deps() {
-    item=${1}
-    exit=false
-    for dep in ${2}; do
-        if ! [ "$(command -v "${dep}")" ]; then
-            err "${item}: '${dep}' is not installed"
-            exit=true
-        fi
-    done
-    if ${exit}; then
-        exit 127
+# Prints a header
+# @arg $1 string The text
+# @stdout The header
+header() {
+    printf "\033[4;38;5;${color_header}m| %b |\033[m\n" "${1}"
+}
+
+# @description Returns the minimum betwen two integers
+# @arg $1 integer The first integer
+# @arg $2 integer The second integer
+# @stdout The minimum between the two integers
+min() {
+    if [ ${1} -lt ${2} ]; then
+        printf "%d\n" ${1}
+    else
+        printf "%d\n" ${2}
     fi
 }
 
-# @description Checks whether a list of libraries exists
-# @arg $1 item The associated item
-# @arg $2 libraries The list of libraries to check as a single string
-check_libs() {
-    item=${1}
-    exit=false
-    for lib in ${2}; do
+# @description Returns the maximum betwen two integers
+# @arg $1 integer The first integer
+# @arg $2 integer The second integer
+# @stdout The maximum between the two integers
+max() {
+    if [ ${1} -gt ${2} ]; then
+        printf "%d\n" ${1}
+    else
+        printf "%d\n" ${2}
+    fi
+}
+
+# @description Duplicates a string multiple times
+# @arg $1 The string to duplicate
+# @arg $2 The amount of times to duplicate
+# @stdout Outputs the created string
+make_string() {
+    i=0
+    while [ ${i} -lt ${2} ]; do
+        str="${str}${1}"
+        i=$((i + 1))
+    done
+    printf "%s" "${str}"
+}
+
+# @description Split's a string into multiple lines
+# @arg $1 string The string to split
+# @arg $2 integer The maximum length of one line
+# @stdout The created string
+split_string() {
+    limit=${2}
+    string=
+    remainder=
+    set -- $@
+    while [ ${#string} -lt ${limit} ]; do
+        string="${string} ${1}"; shift
+    done
+    printf "%s\n" "${string# }"
+    while [ "${2}" ]; do
+        remainder="${remainder} ${1}"
+        shift
+    done
+    if [ "${remainder}" ]; then
+        split_string "${remainder# }" ${limit}
+    fi
+}
+
+# Print an error if a dependency isn't installed
+# @arg $@ string A list of dependencies
+# @stderr The error messages
+# @exitcode 0 If no dependencies are missing
+# @exitcode 127 (exit_code_command_not_found) If a dependency is missing
+ensure_deps() {
+    exit_code=0
+    for dep in "${@}"; do
+        [ "$(command -v ${dep})" ] && continue
+        error "${1} is not installed"
+        exit_code=${exit_code_command_not_found}
+    done
+    return ${exit_code}
+}
+
+# Print an error if a file doesn't exist
+# @arg $@ string A list of dependencies
+# @stderr The error messages
+# @exitcode 0 If no dependencies are missing
+# @exitcode 127 (exit_code_command_not_found) If a dependency is missing
+ensure_files() {
+    exit_code=0
+    for file in "${@}"; do
+        [ -f "${file}" ] && continue
+		error "The file '${file}' does not exist"
+        exit_code=${exit_code_file_not_found}
+    done
+    return ${exit_code}
+}
+
+# @description Checks whether a list of libraries are installed
+# @arg $@ string The list of libraries to check
+ensure_libs() {
+    exit_code=0
+    for lib in "${@}"; do
         output=$(cc -l"${lib}" 2>&1)
         if [ "${output##*undefined reference to \`main\'*}" ]; then
-            err "${item}: 'lib${lib}' is not installed"
-            exit=true
+            error "'lib${lib}' is not installed"
+            exit_code=${exit_code_library_not_found}
         fi
     done
-    if ${exit}; then
-        exit 127
-    fi
+	return ${exit_code}
 }
 
 # @description Checks whether `curl` or `wget` is installed
+# @set download_function string
 # @noargs
-check_curl_wget() {
-    if ! { [ "$(command -v curl)" ] || [ "$(command -v wget)" ] ; }; then
-        err "${1}: 'curl' and 'wget' aren't installed, either one is required"
-        exit 127
-    fi
+# @exitcode 0 If 'curl' or 'wget' is installed
+# @exitcode 127 If 'curl' or 'wget' is installed
+check_for_curl_or_wget() {
+	for p in curl wget; do
+		[ "$(command -v ${p})" ] && return 0
+	done
+	return ${exit_code_command_not_found}
 }
 
-# @description downloads a file from a url
-# @arg $1 url The url
-# @arg $2 filename The output file
-get() {
-    if [ "$(command -v curl)" ]; then
-        curl -Ls "$1" -o "$2"
-    elif  [ "$(command -v wget)" ]; then
-        wget -q "$1" -O "$2"
-    fi
+# @description Downloads a page from the internet
+# @arg $1 string The url
+# @arg $2 string The file destination
+download() {
+	url=${1}
+	file=${2}
+	if [ "$(command -v curl)" ]; then
+		curl -Ls "${1}" -o "${2}"
+	elif [ "$(command -v curl)" ]; then
+		wget -q "${1}" -O "${2}"
+	fi
 }
 
-# @description Asks the user for a yes no response
+# @description Reads one character
+# @noargs
+# @stdout "u" For up
+#         "d" For down
+#         "l" For left
+#         "r" For right
+#         "e" For enter
+#         "q" For quit
+read_char() {
+    saved_tty_settings=$(stty -g)
+    escape_sequence=$(printf '\033')
+    stty -icanon -echo
+
+    char=$(dd bs=1 count=1 status=none)
+    if [ "${char}" = "${escape_sequence}" ]; then
+        char=$(dd bs=2 count=1 status=none)
+        char=${char#?}
+    fi
+
+    stty "${saved_tty_settings}"
+
+    case ${char} in
+        "${tab}") printf "t\n";; # Tab
+        "k"|"A") printf "u\n";; # Up
+        "j"|"B") printf "d\n";; # Down
+        "l"|"C") printf "r\n";; # Right
+        "h"|"D") printf "l\n";; # Left
+        ""|" ") printf "e\n";; # Enter
+        "q") printf "q\n";; # Quit
+    esac
+}
+
+
+# @section UI Functions
+
+# @description Sets up the terminal for UI use
+# It uses an alternate buffer and hides the cursor
+setup_terminal() {
+    printf "%b"\
+           "\033[?1049h"\
+           "\033[?25l"\
+           "\033[2J"
+}
+
+# @description Restores the terminal from UI use
+restore_terminal() {
+    printf "%b"\
+           "\033[?1049l"\
+           "\033[?25h"
+}
+
+# @description Create a box
+# @arg $1 integer The width of the box
+# @arg $@ string The lines to display in the box
+box() {
+    terminal_width=$(tput cols)
+    terminal_height=$(tput lines)
+    box_width=${1}
+    box_height=$(($#+1))
+    left_padding="\033[$((($terminal_width - $box_width) / 2))C"
+    top_padding="\033[$((($terminal_height - $box_height) / 2))B"
+    horizontal_bar=$(make_string '─' $((box_width - 2)))
+    shift
+    printf "\033[H"
+    printf "%b" "${top_padding}"
+
+    # Create the roof
+    printf "%b\033[38;5;${color_box}m┌%s┐\033[m\n"\
+           "${left_padding}"\
+           "${horizontal_bar}"
+
+    # Fill the lines
+    for line in "" "${@}" ""; do
+        printf "%b%$(($box_width - 1))s%b│\033[m\r%b%b│\033[m  %b\n"\
+               "${left_padding}"\
+               ""\
+               "\033[38;5;${color_box}m"\
+               "${left_padding}"\
+               "\033[38;5;${color_box}m"\
+               "${line}"
+    done
+
+    # Create the floor
+    printf "%b\033[38;5;${color_box}m└%s┘\033[m\n"\
+           "${left_padding}"\
+           "${horizontal_bar}"
+}
+
+
+# #description Clears the screen if the terminal dimensions changed
+# @arg $1 integer The old width
+# @arg $2 integer The old height
+box_refresh() {
+    if [ ${1} -ne $(tput cols) ] || [ ${2} -ne $(tput lines) ]; then
+        printf "\033[2J"
+    fi
+}
+# @description Ask a yes or no question
 # @arg $1 string The question
-# @exitcode 0 If user responded with a yes
-# @exitcode 1 If user responded with a no
-prompt() {
+# @exitcode 0 If the user agreed
+# @exitcode 1 If the user didn't agree
+ask() {
+    # question=$(split_string "${1}" 30)
+    question=${1}
+    box_width=$(max 26 $((${#question} + 6)))
+    escape_selected="\033[48;5;${color_selected}m\033[4m"
+    escape_unselected="\033[48;5;${color_unselected}m"
+    escape_reset="\033[m"
+    middle_padding=$(make_string " " $((box_width - 6 - 18)))
+    old_ifs=${IFS}
+    exit_code=0
     while true; do
-        printf "%b [\033[1;32mY\033[m/\033[1;31mn\033[m] " "${1}"
-        read -r response
-        case ${response} in
-            [Yy][Ee][Ss]|[Yy]|"") return 0;;
-            [Nn][Oo]|[Nn]) return 1;;
-            *) printf "Invalid response\n";;
+        old_width=$(tput cols)
+        old_height=$(tput lines)
+        if [ ${exit_code} -eq 0 ]; then # If Yes is selected
+            y_no_str="${escape_selected}   Yes   ${escape_reset}"
+            y_no_str="${y_no_str}${middle_padding}"
+            y_no_str="${y_no_str}${escape_unselected}   No   ${escape_reset}"
+        else
+            y_no_str="${escape_unselected}   Yes   ${escape_reset}"
+            y_no_str="${y_no_str}${middle_padding}"
+            y_no_str="${y_no_str}${escape_selected}   No   ${escape_reset}"
+        fi
+        setup_terminal
+        IFS=${newline}
+        box ${box_width} ${question} "" "${y_no_str}"
+        IFS=${old_ifs}
+        case $(read_char) in
+            "l")
+                exit_code=0
+                escape_yes=${escape_selected}
+                escape_no=${escape_unselected}
+                ;;
+            "r")
+                exit_code=1
+                escape_yes=${escape_unselected}
+                escape_no=${escape_selected}
+                ;;
+            "e") return ${exit_code};;
         esac
+        box_refresh ${old_width} ${old_height}
     done
 }
 
-# @description Adds an item to the global list of items
-# @arg $1 item The item to add
-items_add() {
-    items="${items} ${1}"
+
+# @section Item Functions
+
+# @description Parse arguments to become an item
+# @arg $@ string The pair of text and function names, i.e.:
+#   `item "Dotfiles:dotfiles" "Fonts:fonts" "GTK & Icons:gtk_icons"`
+item() {
+    printf "%s\n" "$@"
 }
 
-help="\
-Usage: smeueger [-h] [ITEMS]...
 
-  Sets up the current system with [ITEMS]. If smeueger is ran as root, then
-  [ITEMS] will also change to configure the system
+toggle_item() {
+    index=${2}
+    count=0
 
-Items as non root:
-  dotfiles  Downloads and sets up Smeueg's personal dotfiles
-  fonts     Installs the JetBrainsMono Nerd Font in '~/.local/share/fonts/'
-  rustup    Installs 'rustup'
-  lua_lsp   Installs lua-language-server
-  flathub   Sets up Flathub for Flatpak
-  gtk       Sets up a gruvbox theme for GTK using:
-              - https://github.com/jmattheis/gruvbox-dark-gtk
-              - https://github.com/jmattheis/gruvbox-dark-icons-gtk
-  matter    Installs 'matter' to '/tmp/', a tool to rice 'grub'
+    old_ifs=${IFS}
+    IFS=${newline}
+    set -- ${1}
 
-Items as root:
-  tmpfs         Mounts '/tmp/' as tmpfs with a size of 512MB
-  swapfile      Creates a swapfile with a size of 4GB, requires 'mkswap' and
-                'swapon'
-  lightdm       Configures lightdm to use the gruvbox color scheme
-  ly            Installs the ly display manager
-  auto_cpufreq  Installs auto-cpufreq
-  touchpad_tap  Configures the touchpad to enable click on tap
-"
-
-
-if ! [ "${1}" ]; then
-    err "No arguments specified, try 'smeueger --help' for more information"
-    exit 65
-fi
-
-
-if [ -w / ]; then
-    # Items as root
-    for arg in "${@}"; do
-        case ${arg} in
-            tmpfs)
-                if ! [ -f /etc/fstab ]; then
-                    err "tmpfs: '/etc/fstab' doesn't exist"
-                    exit 2
-                fi
-                while read -r line; do
-			        [ "${line}" ] || continue
-			        [ "${line%%*tmpfs */tmp *tmpfs*}" ] && continue
-			        err "tmpfs: '/tmp/' is already mounted as tmpfs in '/etc/fstab'"
-                    exit 3
-		        done < /etc/fstab
-                items_add tmpfs
-                ;;
-            swapfile)
-                check_deps swapfile "swapon mkswap"
-                if [ -f /swapfile ]; then
-                    err "swapfile: '/swapfile' already exists"
-                    exit 3
-                fi
-                items_add swapfile
-                ;;
-            ly)
-                check_deps ly "cc make git sed"
-                check_libs ly "pam xcb"
-                items_add ly
-                ;;
-            auto_cpufreq)
-                check_deps auto_cpufreq "git"
-                items_add auto_cpufreq
-                ;;
-            touchpad_tap)
-                if ! [ -d "/etc/X11/xorg.conf.d/" ]; then
-                    err "touchpad_tap: '/etc/X11/xorg.conf.d/' does not exist"
-                    exit 2
-                fi
-                items_add touchpad_tap
-                         ;;
-                         lightdm)
-                             if ! [ -f /etc/lightdm/lightdm-gtk-greeter.conf ]; then
-                                 err "'/etc/lightdm/lightdm-gtk-greeter.conf' doesn't exist"
-                                 exit 2
-                             fi
-                             items_add lightdm
-                             ;;
-                         -h | --help) printf "%s\n" "${help%?}"; exit 0 ;;
-                         *) err "Invalid item '${arg}'"; exit 1 ;;
-        esac
+    items=
+    for line in ${@}; do
+        count=$((count + 1))
+        if [ ${count} -eq ${index} ]; then
+            if ! [ "${line%%\**}" ]; then
+                printf "%s\n" "${line#?}"
+            else
+                printf "*%s\n" "${line}"
+            fi
+        else
+            printf "%s\n" "${line}"
+        fi
     done
-else
-    # Items as non root
-    for arg in "${@}"; do
-        case ${arg} in
-            fonts)
-                check_curl_wget fonts
-                items_add fonts
-                ;;
-            rustup)
-                check_curl_wget rustup
-                items_add rustup
-                ;;
-            lua_lsp)
-                check_deps lua_lsp "tar uname"
-                check_curl_wget lua_lsp
-                os=$(uname)
-                if ! { [ "${os}" = "Linux" ] || [ "${os}" = "Darwin" ]; }; then
-                    err "lua_lsp: Only supports Linux and MacOS"
-                    exit 1
-                fi
-                items_add lua_lsp
-                ;;
-            dotfiles)
-                check_deps dotfiles "git"
-                items_add dotfiles
-                ;;
-            flathub)
-                check_deps flathub "flatpak"
-                items_add flathub
-                ;;
-            gtk)
-                check_deps gtk "tar"
-                check_curl_wget gtk
-                items_add gtk
-                ;;
-            matter)
-                check_deps matter "tar"
-                check_curl_wget matter
+    items=${items#?}
+    IFS=${old_ifs}
+}
 
-                if ! { [ -w /tmp/ ] && [ -d /tmp/ ]; }; then
-                    err "matter: /tmp is not writable or a directory"
-                    exit 1
-                fi
 
-                items_add matter
-                ;;
-            -h | --help) printf "%s\n" "${help%?}"; exit 0 ;;
-            *) err "Invalid item '${arg}'"; exit 1 ;;
-        esac
+# @description Choose items from a list of items
+# @arg $1 string The prompt
+# @arg $2 string The list of items
+# @set REPLY
+choose_multiple_item() {
+    prompt=${1}
+    shift
+    old_ifs=${IFS}
+    IFS=${newline}
+    items=
+    for line in ${@}; do
+        items="${items}${newline}${line}"
+        len=$((len + 1))
     done
-fi
+    items=${items#?}
 
-# Item functions
+    chosen=1
+    chosen_cc=1
+    while true; do
+        box_width=44
+        old_height=$(tput lines)
+        old_width=$(tput cols)
+        string=
+        count=0
+        continue="  Continue  "
+        for item in ${items}; do
+            count=$((count + 1))
+            if ! [ "${item%%\**}" ]; then
+                item="[x] ${item#?}"
+            else
+                item="[ ] ${item}"
+            fi
+            if [ ${count} -eq ${chosen} ]; then
+                string="${string}${newline}\033[1;38;5;4m  ${item%:*}  \033[m"
+            else
+                string="${string}${newline}  ${item%:*}"
+            fi
+        done
+        continue="\033[1;7;38;5;${color_unselected}m  Continue  \033[m"
+        cancel="\033[1;7;38;5;${color_unselected}m  Cancel  \033[m"
+        if [ ${chosen} -gt ${count} ]; then
+            if [ ${chosen_cc} -eq 1 ]; then
+                cancel="\033[1;7;38;5;${color_selected}m  Cancel  \033[m"
+            else
+                continue="\033[1;7;38;5;${color_selected}m  Continue  \033[m"
+            fi
+        fi
+        continue="$(make_string " " $((box_width - 6 - 10 - 12)))${continue}"
+        string=${string#?}
+        box ${box_width}\
+            "\033[4;38;5${color_header}m${prompt}\033[m"\
+            ""\
+            ${string}\
+            ""\
+            "${cancel}${continue}"
+        case $(read_char) in
+            "u") chosen_cc=1; chosen=$((chosen - (chosen > 1)));;
+            "d") chosen_cc=1; chosen=$((chosen + (chosen <= count)));;
+            "l") [ ${chosen} -gt ${count} ] && chosen_cc=1;;
+            "r") [ ${chosen} -gt ${count} ] && chosen_cc=2;;
+            "e") if [ ${chosen} -gt ${count} ]; then
+                     if [ ${chosen_cc} -eq 1 ]; then
+						 REPLY=
+                         break
+                     elif ask "Are you sure?"; then
+                         REPLY=$(toggle_item "${items}" 0)
+						 break
+                     fi
+                 else
+                     items="$(toggle_item "${items}" ${chosen})"
+                     chosen=$((chosen + (chosen < ${count})))
+                 fi
+                 ;;
+            "q") break;;
+        esac
+        box_refresh ${old_width} ${old_height}
+    done
+    IFS=${old_ifs}
+}
+
+
+# @description Choose an item from a list of items
+# @arg $1 string The prompt
+# @arg $2 string The list of items
+choose_single_item() {
+    prompt=${1}
+    shift
+    items=
+    old_ifs=${IFS}
+    IFS=${newline}
+    for line in ${@}; do
+        items="${items}${newline}${line}"
+        len=$((len + 1))
+    done
+    items=${items#?}
+
+    chosen=1
+    while true; do
+        REPLY=
+        box_width=44
+        old_height=$(tput lines)
+        old_width=$(tput cols)
+        string=
+        count=0
+        for item in ${items}; do
+            count=$((count + 1))
+            if [ ${count} -eq ${chosen} ]; then
+                string="${string}${newline}\033[1;38;5;${color_selected}m  ${item%:*}  \033[m"
+            else
+                string="${string}${newline}  ${item%:*}"
+            fi
+        done
+        if [ ${chosen} -gt ${count} ]; then
+            cancel="\033[1;7;38;5;${color_selected}m  Cancel  \033[m"
+        else
+            cancel="\033[1;7;38;5;${color_unselected}m  Cancel  \033[m"
+        fi
+        cancel="$(make_string " " $(((box_width - 16 - 3) / 2)))${cancel}"
+        string=${string#?}
+        box ${box_width}\
+            "\033[4;38;5;${color_header}m${prompt}\033[m"\
+            ""\
+            ${string}\
+            ""\
+            "${cancel}"
+        case $(read_char) in
+            "u") chosen=$((chosen - (chosen > 1)));;
+            "d") chosen=$((chosen + (chosen <= count)));;
+            "e") count=0
+                 for item in ${items}; do
+                     count=$((count + 1))
+                     if [ ${count} -eq ${chosen} ]; then
+                         REPLY="${item}"
+                         break 2
+                     fi
+                 done
+                 REPLY=
+                 break
+                 ;;
+        esac
+        box_refresh ${old_width} ${old_height}
+    done
+    IFS=${old_ifs}
+}
+
+
+
+# @section Check, run, setup functions
+# @noargs
+setup_desktop() {
+    items=$(item "Dotfiles:dotfiles" "Fonts:fonts" "GTK & Icons:gtk_icons")
+    setup_terminal
+    choose_multiple_item "Which ones would you like to setup?" "${items}"
+    restore_terminal
+    for line in ${REPLY}; do
+        [ "${line%%\**}" ] && continue
+        header "Setting Up: ${line%:*}"
+        ${line#*:} || error "Failed to setup ${line%:*}"
+        printf "\n\n"
+    done
+    exit 0
+}
+
 dotfiles() {
+    ensure_deps git || return 1
     dots_dir="${HOME}/.local/dots/"
     dots_url="https://github.com/Smeueg/Dotfiles.git"
 
@@ -256,7 +550,7 @@ dotfiles() {
     fi
 
     if ! git clone --progress --bare --depth 1 "${dots_url}" "${dots_dir}"; then
-        err "Failed to clone dotfiles repository from '${dots_url}'"
+        error "Failed to clone dotfiles repository from '${dots_url}'"
         return 1
     fi
 
@@ -273,78 +567,100 @@ dotfiles() {
                    "${HOME}/${file}" \
                    "${backup_dir=}"
             if ! mkdir -p "${backup_dir}"; then
-                err "Failed to create directory '${backup_dir}'"
+                error "Failed to create directory '${backup_dir}'"
                 return 1
             fi
 
             if ! mv "${HOME}/${file}" "${backup_dir}"; then
-                err "Failed to move '${HOME}/${file}' to '${backup_dir}'"
+                error "Failed to move '${HOME}/${file}' to '${backup_dir}'"
                 return 1
             fi
         fi
     done
 
     if ! git --git-dir="${dots_dir}" --work-tree="${HOME}" checkout; then
-        err "Failed to checkout local dotfiles repo to '~/'"
+        error "Failed to checkout local dotfiles repo to '~/'"
     fi
 }
 
-
 fonts() {
+    check_for_curl_or_wget || return 1
+    ensure_deps tar mkdir || return 1
     font_dir="${HOME}/.local/share/fonts/"
 	font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
     for font in "JetBrainsMono" "Gohu"; do
         printf "Downloading '%s Nerd Font'\n" "${font}"
         mkdir -pv "${font_dir}/${font}NerdFont"
-        get "${font_url}/${font}.tar.xz" - |
+        download "${font_url}/${font}.tar.xz" - |
             tar -xJf - -C "${font_dir}/${font}NerdFont"
     done
 }
 
-
-rustup() {
-    get https://sh.rustup.rs - | sh
-}
-
-
-flathub() {
-    flatpak remote-add --if-not-exists flathub \
-            https://dl.flathub.org/repo/flathub.flatpakrepo
-}
-
-
-gtk() {
+gtk_icons() {
+	ensure_deps gtk || return 1
     dir_theme="${HOME}/.local/share/themes"
     dir_icons="${HOME}/.local/share/icons"
     url_theme="https://github.com/jmattheis/gruvbox-dark-gtk/archive/refs/tags/v1.0.2.tar.gz"
     url_icons="https://github.com/jmattheis/gruvbox-dark-icons-gtk/archive/refs/tags/v1.0.0.tar.gz"
     mkdir -pv "${dir_theme}" "${dir_icons}"
-    printf "Getting GTK theme from: %s\n" "${url_theme}"
-    get "${url_theme}" - | tar -xzf - -C "${dir_theme}"
-    printf "Getting GTK icons from: %s\n" "${url_icons}"
-    get "${url_icons}" - | tar -xzf - -C "${dir_icons}"
+    info "Getting GTK theme from: ${url_theme}"
+    download "${url_theme}" - | tar -xzf - -C "${dir_theme}"
+    info "Getting GTK icons from: ${url_icons}"
+	download "${url_icons}" - | tar -xzf - -C "${dir_icons}"
 }
 
+setup_system() {
+	if ! [ -w / ]; then
+		restore_terminal
+		error "You must have escalated privilages to setup your system"
+		exit ${exit_code_permission_denied}
+	fi
+
+    items=$(item "TMPFS:tmpfs" "Swapfile:swapfile" "AutoCPUFreq:autocpufreq"\
+                 "Tap To Click (Touchpad):touchpad" "Ly:ly")
+	choose_multiple_item "Which ones would you like to setup?" "${items}"
+	restore_terminal
+
+	for item in ${REPLY}; do
+		[ "${item%%\**}" ] && continue
+		header "Setting Up ${item%:*}"
+		${item#*:} || error "Failed to set up ${item%:*}"
+		printf "\n\n"
+	done
+
+	exit
+}
 
 tmpfs() {
-    entry="tmpfs /tmp tmpfs rw,nodev,nosuid,size=512M 0 0"
-    if ! printf "%s\n" "${entry}" >> /etc/fstab; then
-        err "Failed to add '/tmp/' as tmpfs to '/etc/fstab'"
-    fi
+	ensure_files /etc/fstab || return 1
+
+    while read -r line; do
+		[ "${line}" ] || continue
+		[ "${line%%*tmpfs */tmp *tmpfs*}" ] && continue
+		error "tmpfs: '/tmp/' is already mounted as tmpfs in '/etc/fstab'"
+		return 1
+	done < /etc/fstab
+
+	entry="tmpfs /tmp tmpfs rw,nodev,nosuid,size=512M 0 0"
+	if ! printf "%s\n" "${entry}" >> /etc/fstab; then
+		error "Failed to add '/tmp/' as tmpfs to '/etc/fstab'"
+		return 1
+	fi
 }
 
-
 swapfile() {
-    if ! dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress; then
-        err "Failed to create '/swapfile' (dd)"
-        return 1
-    fi
+	ensure_deps dd chmod mkswap swapon || return 1
+	ensure_files /etc/fstab || return 1
+	if ! dd if=/dev/zero of=/swapfile bs=1M count=1024 status=progress; then
+		error "Failed to create '/swapfile' (dd)"
+		return 1
+	fi
     if ! chmod 0600 /swapfile; then
-        err "Failed to change file permissions for '/swapfile' (chmod)"
+        error "Failed to change file permissions for '/swapfile' (chmod)"
         return 1
     fi
 	if ! mkswap -U clear /swapfile; then
-        err "Failed to set up '/swapfile' as swap (mkswap)"
+        error "Failed to set up '/swapfile' as swap (mkswap)"
         return 1
     fi
 	if ! swapon /swapfile; then
@@ -352,44 +668,54 @@ swapfile() {
         return 1
     fi
 	if ! printf "/swapfile none swap defaults 0 0\n" >> /etc/fstab; then
-        err "Failed to add '/swapfile' to '/etc/fstab'"
+        error "Failed to add '/swapfile' to '/etc/fstab'"
+		return 1
     fi
 }
 
-
-lightdm() {
-    lightdm_conf="/etc/lightdm/lightdm-gtk-greeter.conf "
-    mv "${lightdm_conf}" "${lightdm_conf}.backup"
-    printf "[greeter]\n" > /etc/lightdm/lightdm-gtk-greeter.conf
-	printf "background = #282828\n" >> /etc/lightdm/lightdm-gtk-greeter.conf
+autocpufreq() {
+	ensure_deps git || return 1
+    repo_url="https://github.com/AdnanHodzic/auto-cpufreq"
+    repo_dir="/tmp/auto-cpufreq/"
+    if ! git clone "${repo_url}" "${repo_dir}"; then
+        error "Failed to clone '${repo_url}' to '${repo_dir}'"
+        return 1
+    fi
+    "${repo_dir}/auto-cpufreq-installer"
 }
 
-
-matter() {
-    printf "Downloading 'matter' to '/tmp'\n"
-    get https://github.com/mateosss/matter/archive/refs/tags/v1.2.2.tar.gz - |
-        tar -xzf - -C /tmp/
-    printf "%s\n" \
-           "" \
-           "For gruvbox, the appropriate arguments are:" \
-           "  -bg 282828 -fg EBDBB2 -hl FE8019" ""
+touchpad() {
+	file="/etc/X11/xorg.conf.d/99-synaptics-overrides.conf"
+	ensure_files "${file}" || return 1
+	printf "%s\n" \
+		   'Section  "InputClass"' \
+		   '    Identifier  "touchpad overrides"' \
+		   '    Driver "libinput"' \
+		   '    MatchIsTouchpad "on"' \
+		   '    Option "Tapping" "on"' \
+		   '    Option "TappingButtonMap" "lmr"' \
+		   'EndSection' \
+		   > "${file}"
 }
-
 
 ly() {
-    repo_url="https://github.com/fairyglade/ly"
+    ensure_deps ly cc make git sed || return 1
+	ensure_libs pam xcb || return 1
+	repo_url="https://github.com/fairyglade/ly"
     repo_dir="/tmp/ly"
     if ! git clone --recurse-submodules "${repo_url}" "${repo_dir}"; then
-        err "Failed to clone '${repo_url}' to '${repo_dir}'"
+        error "Failed to clone '${repo_url}' to '${repo_dir}'"
         return 1
     fi
     if ! make --directory="${repo_dir}" install; then
-        err "Failed to run 'make install' on '${repo_dir}'"
+        error "Failed to run 'make install' on '${repo_dir}'"
         return 1
     fi
     if [ "$(command -v systemctl)" ]; then
+		info "Enabling ly.service"
         make --directory="${repo_dir}" installsystemd &&
             systemctl enable ly.service --force
+		info "Setting colors for ly"
         bg="282828"
         fg="ebdbb2"
         escape_sequence_sed="\\\\033]P0${bg}\\\\033]P7${fg}\\\\033c"
@@ -401,77 +727,97 @@ ly() {
     fi
 }
 
+install_programs() {
+    items=$(item "Rustup:rustup" "LuaLSP:lua_lsp")
+    setup_terminal
+    choose_multiple_item "Which ones would you like to setup?" "${items}"
+    restore_terminal
+    for line in ${REPLY}; do
+        [ "${line%%\**}" ] && continue
+        header "Installing ${line%:*}"
+        ${line#*:} || error "Failed to install ${line%:*}"
+        printf "\n\n"
+    done
+    exit 0
+}
+
+rustup() {
+	check_for_curl_or_wget || return 1
+	if download "https://sh.rustup.rs" - | sh; then
+		return 1
+	fi
+}
 
 lua_lsp() {
-    dir="${HOME}/.local/share/lua-language-server/"
-    if ! mkdir -pv "${dir}"; then
-        err "Failed to create directory '${dir}'"
-        return 1
-    fi
-
-    json=$(curl -s https://api.github.com/repos/LuaLS/lua-language-server/releases/latest)
+	check_for_curl_or_wget || return 1
+	ensure_deps tar uname || return 1
+	os=$(uname)
     arch=$(uname -m)
-    os=$(uname)
-    file_suffix=""
+
     script="${HOME}/.local/bin/lua-language-server"
 
-    if [ "${os}" = "Linux" ]; then
-        file_suffix="${file_suffix}linux"
-    elif [ "${os}" = "Darwin" ]; then
-        file_suffix="${file_suffix}darwin"
-    fi
-    if [ "${arch}" = "x86_64" ]; then
-        file_suffix="${file_suffix}-x64"
-    elif [ "${arch}" = "x86_64" ]; then
-        file_suffix="${file_suffix}-arm64"
-    fi
-    file_suffix="${file_suffix}.tar.gz"
+    file_suffix=
+	case ${os} in
+		"Linux") file_suffix="linux";;
+		"Darwin") file_suffix="darwin";;
+		*) error "The Lua LSP only supports Linux and MacOS"
+		   return 1;;
+	esac
+	file_suffix="${file_suffix}-"
+	case ${arch} in
+		"x86_64") file_suffix="${file_suffix}x64";;
+		"aarch64") file_suffix="${file_suffix}arm64";;
+		*) error "The Lua LSP only supports x64 and arm64"
+		   return 1;;
+	esac
+	file_suffix="${file_suffix}.tar.gz"
 
-    for line in ${json}; do
-        [ "${line##*/*${file_suffix}*}" ] && continue
-        url=${line}
-        url=${url#\"}
-        url=${url%\"}
-        break
-    done
-
-    get "${url}" - | tar -xzf - -C "${dir}"
-    printf "#!/bin/sh\n" > "${script}"
-    printf 'exec "${HOME}/.local/share/lua-language-server/bin/lua-language-server" "$@"\n' >> "${script}"
-}
-
-
-auto_cpufreq() {
-    repo_url="https://github.com/AdnanHodzic/auto-cpufreq"
-    repo_dir="/tmp/auto-cpufreq/"
-    if ! git clone "${repo_url}" "${repo_dir}"; then
-        err "Failed to clone '${repo_url}' to '${repo_dir}'"
+    dir="${HOME}/.local/share/lua-language-server/"
+    if ! mkdir -pv "${dir}"; then
+        error "Failed to create directory '${dir}'"
         return 1
     fi
-    "${repo_dir}/auto-cpufreq-installer"
+
+	for line in $(download "https://api.github.com/repos/LuaLS/lua-language-server/releases/latest" -); do
+		[ "${line##*/*${file_suffix}*}" ] && continue
+		url=${line}
+		url=${url%\"}
+		url=${url##*\"}
+		break
+	done
+
+	download "${url}" - | tar -xzf - -C "${dir}"
+	printf "#!/bin/sh\n" > "${script}"
+	printf 'exec "${HOME}/.local/share/lua-language-server/bin/lua-language-server" "$@"\n' >> "${script}"
+	chmod +x "${script}"
 }
 
+# @section Main Function
+main() {
+	if [ -w / ]; then
+		setup_terminal
+		if ! ask "You are running the script with elevated privilages, do you want to continue?"; then
+			restore_terminal
+			exit 1
+		fi
+	fi
+	original_items=$(item "Setup The Desktop:setup_desktop"\
+                          "Setup The System:setup_system"\
+                          "Install A Program:install_programs")
+    program_items=$(item "Lua Language Server:lua_lsp"\
+                         "Rustup:rustup")
 
-touchpad_tap() {
-    printf "%s\n" \
-           'Section  "InputClass"' \
-           '    Identifier  "touchpad overrides"' \
-           '    Driver "libinput"' \
-           '    MatchIsTouchpad "on"' \
-           '    Option "Tapping" "on"' \
-           '    Option "TappingButtonMap" "lmr"' \
-           'EndSection' \
-           > /etc/X11/xorg.conf.d/99-synaptics-overrides.conf
+    while true; do
+        setup_terminal
+        choose_single_item "What would you like to do?" "${original_items}"
+        if [ "${REPLY}" ]; then
+            "${REPLY#*:}"
+            restore_terminal
+        else
+            break
+        fi
+    done
+    restore_terminal
 }
 
-
-for item in ${items}; do
-    printf "[ ─ \033[1;33m%s\033[m ─ ]\n" "${item}"
-    if ${item}; then
-        printf "Finished setting up %s...\n\n" "${item}"
-    else
-        printf "Failed setting up %s...\n\n" "${item}"
-    fi
-done
-
-printf "\033[A"
+main
