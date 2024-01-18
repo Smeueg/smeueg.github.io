@@ -609,6 +609,7 @@ gtk_icons() {
 	download "${url_icons}" - | tar -xzf - -C "${dir_icons}"
 }
 
+# @section System Setup
 setup_system() {
 	if ! [ -w / ]; then
 		restore_terminal
@@ -727,6 +728,7 @@ ly() {
     fi
 }
 
+# @section Programs Installations
 install_programs() {
     items=$(item "Rustup:rustup" "LuaLSP:lua_lsp")
     setup_terminal
@@ -790,6 +792,17 @@ lua_lsp() {
 	printf "#!/bin/sh\n" > "${script}"
 	printf 'exec "${HOME}/.local/share/lua-language-server/bin/lua-language-server" "$@"\n' >> "${script}"
 	chmod +x "${script}"
+}
+
+yt_dlp() {
+	check_for_curl_or_wget || return 1
+	ensure_deps chmod || return 1
+
+	bin_dir="${HOME}/.local/bin/"
+	info "Installing 'yt-dlp' to '${bin_dir}'"
+	download https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp\
+			 ${bin_dir}/yt-dlp
+	chmod +x ${bin_dir}/yt-dlp
 }
 
 # @section Main Function
