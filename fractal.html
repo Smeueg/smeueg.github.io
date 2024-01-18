@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Document</title>
+		<style>
+			:root {
+				--fg: #ebdbb2;
+				--fg2: #fe8019;
+				--bg: #282828;
+				--bg2: #3c3836;
+				--bg3: #504945;
+				--red: #fb4934;
+			}
+			body { background: var(--bg) }
+			canvas {
+					position: absolute;
+					top: 50%;
+					left: 50%;
+					transform: translate(-50%, -50%);
+			}
+		</style>
+  </head>
+  <body>
+		<canvas id="canvas" width="800" height="800" onmousemove="update(event)"></canvas>
+	</body>
+	<script type="text/javascript" src="./fractal.js"></script>
+</html>
