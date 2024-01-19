@@ -730,7 +730,7 @@ ly() {
 
 # @section Programs Installations
 install_programs() {
-    items=$(item "Rustup:rustup" "LuaLSP:lua_lsp")
+    items=$(item "Rustup:rustup" "LuaLSP:lua_lsp" "YT-DLP:yt_dlp")
     setup_terminal
     choose_multiple_item "Which ones would you like to setup?" "${items}"
     restore_terminal
