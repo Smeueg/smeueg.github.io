@@ -528,11 +528,13 @@ setup_desktop() {
     setup_terminal
     choose_multiple_item "Which ones would you like to setup?" "${items}"
     restore_terminal
-    for line in ${REPLY}; do
-        [ "${line%%\**}" ] && continue
-        header "Setting Up: ${line%:*}"
-        ${line#*:} || error "Failed to setup ${line%:*}"
-        printf "\n\n"
+    for item in ${REPLY}; do
+        [ "${item%%\**}" ] && continue
+		item_name=${item%:*}
+		item_name=${item_name#\*}
+		header "Setting Up: ${item_name}"
+		${item#*:} || error "Failed to setup ${item_name}"
+		printf "\n\n"
     done
     exit 0
 }
@@ -618,14 +620,17 @@ setup_system() {
 	fi
 
     items=$(item "TMPFS:tmpfs" "Swapfile:swapfile" "AutoCPUFreq:autocpufreq"\
-                 "Tap To Click (Touchpad):touchpad" "Ly:ly")
+                 "Tap To Click (Touchpad):touchpad" "Ly:ly"\
+				 "Fix Cursor:fix_cursor")
 	choose_multiple_item "Which ones would you like to setup?" "${items}"
 	restore_terminal
 
 	for item in ${REPLY}; do
+		item_name=${item%:*}
+		item_name=${item_name#/*}
 		[ "${item%%\**}" ] && continue
-		header "Setting Up ${item%:*}"
-		${item#*:} || error "Failed to set up ${item%:*}"
+		header "Setting Up ${item_name}"
+		${item#*:} || error "Failed to set up ${item_name}"
 		printf "\n\n"
 	done
 
@@ -728,16 +733,26 @@ ly() {
     fi
 }
 
+fix_cursor() {
+	if ! [ -d /usr/share/icons/default ]; then
+		error "Nothing to be fixed, /usr/share/icons/default doesn't exist"
+		return 1
+	fi
+	mv /usr/share/icons/default/ /usr/share/icons/default.backup/
+}
+
 # @section Programs Installations
 install_programs() {
     items=$(item "Rustup:rustup" "LuaLSP:lua_lsp" "YT-DLP:yt_dlp")
     setup_terminal
     choose_multiple_item "Which ones would you like to setup?" "${items}"
     restore_terminal
-    for line in ${REPLY}; do
-        [ "${line%%\**}" ] && continue
-        header "Installing ${line%:*}"
-        ${line#*:} || error "Failed to install ${line%:*}"
+    for item in ${REPLY}; do
+        [ "${item%%\**}" ] && continue
+		item_name=${item%:*}
+		item_name=${item_name#\*}
+        header "Installing ${item_name}"
+        ${item#*:} || error "Failed to install ${item_name}"
         printf "\n\n"
     done
     exit 0
