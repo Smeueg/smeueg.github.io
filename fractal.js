@@ -11,7 +11,7 @@ canvasContext.strokeStyle = "#fe8019";
 function drawFirstBranch() {
 		canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 		canvasContext.beginPath();
-		drawBranch(canvas.width / 2, canvas.height, canvas.height / 3, 0, 8);
+		drawBranch(canvas.width / 2, canvas.height, canvas.height / 3, 0, 12);
 		canvasContext.stroke()
 		canvasContext.closePath();
 }
