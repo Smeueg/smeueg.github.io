@@ -722,8 +722,8 @@ ly() {
         make --directory="${repo_dir}" installsystemd &&
             systemctl enable ly.service --force
 		info "Setting colors for ly"
-        bg="282828"
-        fg="ebdbb2"
+        bg="202020"
+        fg="D0D0D0"
         escape_sequence_sed="\\\\033]P0${bg}\\\\033]P7${fg}\\\\033c"
         escape_sequence_printf="\\033]P0${bg}\\033]P7${fg}\\033c"
         sed -i "/^\[Service\]/a ExecStartPre=/usr/bin/printf '%%b' '${escape_sequence_sed}'"\
