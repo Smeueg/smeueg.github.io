@@ -22,12 +22,12 @@ exit_code_permission_denied=1
 exit_code_file_not_found=2
 
 # @section Helper Variables
-original_ifs=${IFS}
 tab=$(printf "\t")
 newline="
 "
 
 # @section Color Variables
+color_info=2
 color_selected=4
 color_unselected=239
 color_header=7
@@ -252,8 +252,8 @@ box() {
     terminal_height=$(tput lines)
     box_width=${1}
     box_height=$(($#+1))
-    left_padding="\033[$((($terminal_width - $box_width) / 2))C"
-    top_padding="\033[$((($terminal_height - $box_height) / 2))B"
+    left_padding="\033[$(((terminal_width - box_width) / 2))C"
+    top_padding="\033[$(((terminal_height - box_height) / 2))B"
     horizontal_bar=$(make_string '─' $((box_width - 2)))
     shift
     printf "\033[H"
@@ -286,7 +286,7 @@ box() {
 # @arg $1 integer The old width
 # @arg $2 integer The old height
 box_refresh() {
-    if [ ${1} -ne $(tput cols) ] || [ ${2} -ne $(tput lines) ]; then
+    if [ "${1}" -ne "$(tput cols)" ] || [ "${2}" -ne "$(tput lines)" ]; then
         printf "\033[2J"
     fi
 }
@@ -588,14 +588,20 @@ dotfiles() {
 fonts() {
     check_for_curl_or_wget || return 1
     ensure_deps tar mkdir || return 1
-    font_dir="${HOME}/.local/share/fonts/"
-	font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
-    for font in "JetBrainsMono" "Gohu"; do
-        printf "Downloading '%s Nerd Font'\n" "${font}"
-        mkdir -pv "${font_dir}/${font}NerdFont"
-        download "${font_url}/${font}.tar.xz" - |
-            tar -xJf - -C "${font_dir}/${font}NerdFont"
-    done
+    if [ "${TERMUX_VERSION}" ]; then
+        font_url="https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/JetBrainsMono/Ligatures/Regular/JetBrainsMonoNerdFontMono-Regular.ttf"
+        download "${font_url}" "~/.termux/font.ttf"
+        termux-reload-settings
+    else
+        font_dir="${HOME}/.local/share/fonts/"
+	    font_url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download"
+        for font in "JetBrainsMono" "Gohu"; do
+            printf "Downloading '%s Nerd Font'\n" "${font}"
+            mkdir -pv "${font_dir}/${font}NerdFont"
+            download "${font_url}/${font}.tar.xz" - |
+                tar -xJf - -C "${font_dir}/${font}NerdFont"
+        done
+    fi
 }
 
 gtk_icons() {
@@ -816,8 +822,8 @@ yt_dlp() {
 	bin_dir="${HOME}/.local/bin/"
 	info "Installing 'yt-dlp' to '${bin_dir}'"
 	download https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp\
-			 ${bin_dir}/yt-dlp
-	chmod +x ${bin_dir}/yt-dlp
+			 "${bin_dir}"/yt-dlp
+	chmod +x "${bin_dir}"/yt-dlp
 }
 
 # @section Main Function
@@ -832,8 +838,6 @@ main() {
 	original_items=$(item "Setup The Desktop:setup_desktop"\
                           "Setup The System:setup_system"\
                           "Install A Program:install_programs")
-    program_items=$(item "Lua Language Server:lua_lsp"\
-                         "Rustup:rustup")
 
     while true; do
         setup_terminal
