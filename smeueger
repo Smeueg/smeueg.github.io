@@ -4,9 +4,7 @@
 # @description Easy installation/setup for:
 # * Smeueg's Dotfiles (https://github.com/Smeueg/Dotfiles)
 # * JetBrainsMono Nerd Font
-# * A GTK theme and icons (Gruvbox-dark)
-#   * https://github.com/jmattheis/gruvbox-dark-gtk
-#   * https://github.com/jmattheis/gruvbox-dark-icons-gtk
+# * A GTK theme and icons (base16-default-dark)
 # * Flathub
 # * TMPFS (on /tmp)
 # * A swapfile (on /swapfile 1Gb)
@@ -225,6 +223,31 @@ read_char() {
     esac
 }
 
+# @description Modifies or creates ~/.config/gtk-3.0/settings.ini to set a
+# setting
+# @arg $1 string The setting to modify
+# @arg $2 string The value to set
+set_gtk_setting() {
+    setting="${1}"
+    value="${2}"
+    file="${HOME}/.config/gtk-3.0/settings.ini"
+
+    ! [ -f "${file}"  ] && printf "[Settings]\n" > "${file}"
+
+    settings_already_set=false
+    while IFS= read line; do
+        if ! [ "${line%%${setting}=*}" ]; then
+            settings_already_set=true
+            break
+        fi
+    done < "${file}"
+
+    if ${settings_already_set}; then
+        sed -i "s/${setting}=.*/${setting}=${value}/" "${file}"
+    else
+        printf "%s=%s\n" "${setting}" "${value}" >> "${file}"
+    fi
+}
 
 # @section UI Functions
 
@@ -601,21 +624,31 @@ fonts() {
             download "${font_url}/${font}.tar.xz" - |
                 tar -xJf - -C "${font_dir}/${font}NerdFont"
         done
+        set_gtk_setting "gtk-font-name" "JetBrainsMono Nerd Font Mono 11"
     fi
 }
 
 gtk_icons() {
-	ensure_deps gtk || return 1
+    ensure_deps git || return 1
     dir_theme="${HOME}/.local/share/themes"
     dir_icons="${HOME}/.local/share/icons"
-    url_theme="https://github.com/jmattheis/gruvbox-dark-gtk/archive/refs/tags/v1.0.2.tar.gz"
-    url_icons="https://github.com/jmattheis/gruvbox-dark-icons-gtk/archive/refs/tags/v1.0.0.tar.gz"
+    url_theme="https://github.com/smeueg/base16-default-dark"
+    url_icons="https://github.com/PapirusDevelopmentTeam/papirus-icon-theme"
+
     mkdir -pv "${dir_theme}" "${dir_icons}"
+
     info "Getting GTK theme from: ${url_theme}"
-    download "${url_theme}" - | tar -xzf - -C "${dir_theme}"
+    git clone "${url_theme}" "${dir_theme}/${url_theme##*/}" --depth 1
+
     info "Getting GTK icons from: ${url_icons}"
-	download "${url_icons}" - | tar -xzf - -C "${dir_icons}"
+    git clone "${url_icons}" "/tmp/${url_icons##*/}" --depth 1
+    mv "/tmp/${url_icons##*/}/Papirus" "${dir_icons}"
+    rm -rf "/tmp/${url_icons##*/}"
+
+    set_gtk_setting "gtk-theme-name" "base16-default-dark"
+    set_gtk_setting "gtk-icon-theme-name" "Papirus"
 }
+
 
 # @section System Setup
 setup_system() {
@@ -746,6 +779,7 @@ fix_cursor() {
 	fi
 	mv /usr/share/icons/default/ /usr/share/icons/default.backup/
 }
+
 
 # @section Programs Installations
 install_programs() {
