@@ -614,7 +614,7 @@ fonts() {
     if [ "${TERMUX_VERSION}" ]; then
         info "termux detected"
         font_url="https://github.com/ryanoasis/nerd-fonts/raw/refs/heads/master/patched-fonts/JetBrainsMono/Ligatures/Regular/JetBrainsMonoNerdFontMono-Regular.ttf"
-        download "${font_url}" "~/.termux/font.ttf"
+        download "${font_url}" "${HOME}/.termux/font.ttf"
         termux-reload-settings
     else
         font_dir="${HOME}/.local/share/fonts/"
