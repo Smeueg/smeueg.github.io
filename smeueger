@@ -344,16 +344,10 @@ ask() {
         box ${box_width} ${question} "" "${y_no_str}"
         IFS=${old_ifs}
         case $(read_char) in
-            "l")
-                exit_code=0
-                escape_yes=${escape_selected}
-                escape_no=${escape_unselected}
-                ;;
-            "r")
-                exit_code=1
-                escape_yes=${escape_unselected}
-                escape_no=${escape_selected}
-                ;;
+            "l") exit_code=0
+                 ;;
+            "r") exit_code=1
+                 ;;
             "e") return ${exit_code};;
         esac
         box_refresh ${old_width} ${old_height}
@@ -407,7 +401,7 @@ choose_multiple_item() {
     old_ifs=${IFS}
     IFS=${newline}
     items=
-    for line in ${@}; do
+    for line in "${@}"; do
         items="${items}${newline}${line}"
         len=$((len + 1))
     done
@@ -784,7 +778,7 @@ fix_cursor() {
 
 # @section Programs Installations
 install_programs() {
-    items=$(item "Rustup:rustup" "LuaLSP:lua_lsp" "YT-DLP:yt_dlp")
+    items=$(item "Rustup:rustup" "LuaLSP:lua_lsp" "YT-DLP:yt_dlp" "BlueTUI:bluetui")
     setup_terminal
     choose_multiple_item "Which ones would you like to setup?" "${items}"
     restore_terminal
@@ -793,10 +787,47 @@ install_programs() {
 		item_name=${item%:*}
 		item_name=${item_name#\*}
         header "Installing ${item_name}"
+        info "Installed ${item_name}"
         ${item#*:} || error "Failed to install ${item_name}"
         printf "\n\n"
     done
     exit 0
+}
+
+bluetui() {
+    check_for_curl_or_wget || return 1
+
+    if [ -d "${HOME}/.local/bin/" ]; then
+        mkdir -pv "${HOME}/.local/bin/" || return 1
+    fi
+
+    url=""
+    suffix=""
+    api_url="https://api.github.com/repos/pythops/bluetui/releases/latest"
+    json=$(download "${api_url}" -)
+    case $(uname --machine) in
+	    x86_64)
+            suffix="x86_64-linux-gnu"
+	        ;;
+	    arm*)
+            suffix="aarch64-linux-gnu"
+		    ;;
+        *)
+            err "Unknown architecture"
+            return 1;
+    esac
+
+    while read -r line; do
+        [ "${line}" ] || continue
+        [ "${line%%*\"browser_download_url\":*\"*${suffix}\"}" ] && continue
+        url=${line}
+        url=${url%\"*}
+        url=${url##*\"}
+    done << EOF
+${json}
+EOF
+    download "${url}" "${HOME}/.local/bin/bluetui"
+    chmod +x "${HOME}/.local/bin/bluetui"
 }
 
 rustup() {
