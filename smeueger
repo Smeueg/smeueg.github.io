@@ -778,7 +778,7 @@ fix_cursor() {
 
 # @section Programs Installations
 install_programs() {
-    items=$(item "Rustup:rustup" "LuaLSP:lua_lsp" "YT-DLP:yt_dlp" "BlueTUI:bluetui")
+    items=$(item "Rustup:rustup" "BlueTUI:bluetui")
     setup_terminal
     choose_multiple_item "Which ones would you like to setup?" "${items}"
     restore_terminal
@@ -835,61 +835,6 @@ rustup() {
 	if download "https://sh.rustup.rs" - | sh; then
 		return 1
 	fi
-}
-
-lua_lsp() {
-	check_for_curl_or_wget || return 1
-	ensure_deps tar uname || return 1
-	os=$(uname)
-    arch=$(uname -m)
-
-    script="${HOME}/.local/bin/lua-language-server"
-
-    file_suffix=
-	case ${os} in
-		"Linux") file_suffix="linux";;
-		"Darwin") file_suffix="darwin";;
-		*) error "The Lua LSP only supports Linux and MacOS"
-		   return 1;;
-	esac
-	file_suffix="${file_suffix}-"
-	case ${arch} in
-		"x86_64") file_suffix="${file_suffix}x64";;
-		"aarch64") file_suffix="${file_suffix}arm64";;
-		*) error "The Lua LSP only supports x64 and arm64"
-		   return 1;;
-	esac
-	file_suffix="${file_suffix}.tar.gz"
-
-    dir="${HOME}/.local/share/lua-language-server/"
-    if ! mkdir -pv "${dir}"; then
-        error "Failed to create directory '${dir}'"
-        return 1
-    fi
-
-	for line in $(download "https://api.github.com/repos/LuaLS/lua-language-server/releases/latest" -); do
-		[ "${line##*/*${file_suffix}*}" ] && continue
-		url=${line}
-		url=${url%\"}
-		url=${url##*\"}
-		break
-	done
-
-	download "${url}" - | tar -xzf - -C "${dir}"
-	printf "#!/bin/sh\n" > "${script}"
-	printf 'exec "${HOME}/.local/share/lua-language-server/bin/lua-language-server" "$@"\n' >> "${script}"
-	chmod +x "${script}"
-}
-
-yt_dlp() {
-	check_for_curl_or_wget || return 1
-	ensure_deps chmod || return 1
-
-	bin_dir="${HOME}/.local/bin/"
-	info "Installing 'yt-dlp' to '${bin_dir}'"
-	download https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp\
-			 "${bin_dir}"/yt-dlp
-	chmod +x "${bin_dir}"/yt-dlp
 }
 
 # @section Main Function
