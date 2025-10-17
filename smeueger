@@ -249,6 +249,19 @@ set_gtk_setting() {
     fi
 }
 
+
+# @description Get the directory of a path
+# @arg $1 string The path
+get_dir() {
+    path=${1}
+
+    if ! [ "${path##*/}" ]; then
+        path=${path%/}
+    fi
+
+    printf "%s\n" "${path%/*}"
+}
+
 # @section UI Functions
 
 # @description Sets up the terminal for UI use
@@ -365,6 +378,9 @@ item() {
 }
 
 
+# @description Toggle an item
+# @arg $1 The list of items
+# @arg $2 The index of the item to toggle
 toggle_item() {
     index=${2}
     count=0
@@ -653,8 +669,8 @@ setup_system() {
 		exit ${exit_code_permission_denied}
 	fi
 
-    items=$(item "TMPFS:tmpfs" "Swapfile:swapfile" "AutoCPUFreq:autocpufreq"\
-                 "Tap To Click (Touchpad):touchpad" "Ly:ly"\
+    items=$(item "Ly:ly" "TMPFS:tmpfs" "Swapfile:swapfile"\
+                 "AutoCPUFreq:autocpufreq" "Tap To Click (Touchpad):touchpad"\
 				 "Fix Cursor:fix_cursor")
 	choose_multiple_item "Which ones would you like to setup?" "${items}"
 	restore_terminal
@@ -721,12 +737,18 @@ autocpufreq() {
         error "Failed to clone '${repo_url}' to '${repo_dir}'"
         return 1
     fi
-    "${repo_dir}/auto-cpufreq-installer"
+
+    if "${repo_dir}/auto-cpufreq-installer"; then
+        info "Don't forget to enable the 'auto-cpufreq' service" 
+    fi
 }
 
 touchpad() {
 	file="/etc/X11/xorg.conf.d/99-synaptics-overrides.conf"
-	ensure_files "${file}" || return 1
+
+    ensure_deps Xorg || return 1;
+    mkdir -p "$(get_dir "${file}")" || return 1
+
 	printf "%s\n" \
 		   'Section  "InputClass"' \
 		   '    Identifier  "touchpad overrides"' \
@@ -739,32 +761,34 @@ touchpad() {
 }
 
 ly() {
-    ensure_deps ly cc make git sed || return 1
+    ensure_deps zig git sed || return 1
 	ensure_libs pam xcb || return 1
+
 	repo_url="https://github.com/fairyglade/ly"
     repo_dir="/tmp/ly"
+
     if ! git clone --recurse-submodules "${repo_url}" "${repo_dir}"; then
         error "Failed to clone '${repo_url}' to '${repo_dir}'"
         return 1
     fi
-    if ! make --directory="${repo_dir}" install; then
-        error "Failed to run 'make install' on '${repo_dir}'"
+
+    if ! (cd "${repo_dir}" && zig build); then
+        error "Failed to run 'zig build' on '${repo_dir}'"
         return 1
     fi
-    if [ "$(command -v systemctl)" ]; then
-		info "Enabling ly.service"
-        make --directory="${repo_dir}" installsystemd &&
-            systemctl enable ly.service --force
-		info "Setting colors for ly"
-        bg="202020"
-        fg="D0D0D0"
-        escape_sequence_sed="\\\\033]P0${bg}\\\\033]P7${fg}\\\\033c"
-        escape_sequence_printf="\\033]P0${bg}\\033]P7${fg}\\033c"
-        sed -i "/^\[Service\]/a ExecStartPre=/usr/bin/printf '%%b' '${escape_sequence_sed}'"\
-            /lib/systemd/system/ly.service
-        printf "term_reset_cmd = /usr/bin/tput reset; /usr/bin/printf '%%b' '%s'\n" \
-               "${escape_sequence_printf}" >> /etc/ly/config.ini
+
+    if ! (cd "${repo_dir}" && zig build installexe -Dinit_system=systemd); then
+        error "Failed to run 'zig build installexe -Dinit_system=systemd' on '${repo_dir}'"
+        return 1
     fi
+
+    systemctl enable ly.service --force
+    systemctl disable getty@tty2.service
+
+    sed -i 's/^bg = .*/bg = 0x00202020/' /etc/ly/config.ini
+    sed -i 's/^fg = .*/fg = 0x00D0D0D0/' /etc/ly/config.ini
+    sed -i 's/^border_fg = .*/border_fg = 0x00D0D0D0/' /etc/ly/config.ini
+    sed -i 's/^xinitrc = .*/xinitrc = ~/.config/X11/xinitrc/' /etc/ly/config.ini
 }
 
 fix_cursor() {
